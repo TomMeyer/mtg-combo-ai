@@ -1,0 +1,9 @@
+[build-system]
+build-requirements = []
+
+[project]
+name = "mtg-ai"
+
+[tool.black]
+line-length = 90
+target-version = ["py311"]
