@@ -1,6 +1,6 @@
+import typing
 from enum import StrEnum
 from typing import Final, Literal
-import typing
 
 MTG_STANDARD_COLOR_ORDER: Final = "WUBRGC"
 

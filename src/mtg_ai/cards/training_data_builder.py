@@ -1,15 +1,14 @@
+import inspect
 import json
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 from typing import Callable, Final
 
 import datasets
-
 import tqdm
 
 from mtg_ai.cards.database import MTGDatabase
-import inspect
 
 QUESTION_ANSWER_FILE = Path.home().joinpath(
     ".cache", "mtg-ai", "question_answer_dataset.json"

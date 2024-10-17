@@ -1,9 +1,12 @@
+import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
-import sqlite3
 from typing import ClassVar, Literal
+
 import pandas as pd
 import rapidfuzz
+
+from mtg_ai.cards.utils import color_to_identity, sort_colors, strip_commas
 from mtg_ai.constants import (
     COLOR_IDENTITY,
     MTG_CARD_TYPE,
@@ -12,7 +15,6 @@ from mtg_ai.constants import (
     Color,
     ColorIdentity,
 )
-from mtg_ai.cards.utils import strip_commas, sort_colors, color_to_identity
 
 MTG_CACHE_DIR = Path.home().joinpath(".cache", "mtg-ai")
 MTG_SQLITE_FILE = MTG_CACHE_DIR.joinpath("AllPrintings.sqlite")
@@ -81,9 +83,10 @@ WHERE
 
 
 def _get_mtg_sqlite_file():
-    import requests
     import gzip
     import shutil
+
+    import requests
 
     mtgjson_download_url = "https://mtgjson.com/api/v5/AllPrintings.sqlite.gz"
 

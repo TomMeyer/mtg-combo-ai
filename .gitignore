@@ -218,3 +218,15 @@ pyrightconfig.json
 # Ignore all local history of files
 .history
 .ionide
+
+# AI related folders
+data/
+outputs/
+results/
+logs/
+
+
+# pixi environments
+.pixi
+*.egg-info
+.gitattributes
