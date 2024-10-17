@@ -1,7 +1,7 @@
 from mtg_ai.data.tokenize_cards import MTGCardDataset
 import torch
 from torch.utils.data import DataLoader
-from transformers import GPT2LMHeadModel, AutoModel, AutoModelForCausalLM
+from transformers import AutoModelForCausalLM
 from torch.optim.adamw import AdamW
 from tqdm import tqdm, trange
 from pathlib import Path
@@ -21,7 +21,9 @@ class MTGCardTraining:
         self.data_loader: DataLoader = DataLoader(
             self.card_dataset, batch_size=batch_size, shuffle=True
         )
-        self.model: AutoModelForCausalLM = AutoModelForCausalLM.from_pretrained("Intel/neural-chat-7b-v3", device_map="auto", load_in_4bit=True)
+        self.model: AutoModelForCausalLM = AutoModelForCausalLM.from_pretrained(
+            "Intel/neural-chat-7b-v3", device_map="auto", load_in_4bit=True
+        )
         self.optimizer: AdamW = AdamW(self.model.parameters(), lr=5e-5)
 
     def train(self):

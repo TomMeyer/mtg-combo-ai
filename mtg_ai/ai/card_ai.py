@@ -1,20 +1,16 @@
 from logging import getLogger
 from pathlib import Path
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
+from transformers import GPT2Tokenizer
 from mtg_ai import constants
 import torch
 import pandas as pd
 from torch.utils.data import DataLoader
 from mtg_ai.data import MTGCards
-import torch
 from transformers import AutoModelForCausalLM
 from tqdm import tqdm, trange
-from pathlib import Path
 from tqdm.contrib.logging import logging_redirect_tqdm
-from mtg_ai import constants
 from mtg_ai.data import MTGCardDataset
 from torch.optim.adamw import AdamW
-
 
 
 logger = getLogger(__name__)
@@ -38,7 +34,9 @@ class MTGCardAI:
         batch_size: int = 1,
         use_cuda: bool = True,
     ):
-        device = torch.device("cuda" if torch.cuda.is_available() and use_cuda else "cpu")
+        device = torch.device(
+            "cuda" if torch.cuda.is_available() and use_cuda else "cpu"
+        )
         data_loader: DataLoader = DataLoader(
             MTGCardDataset(), batch_size=batch_size, shuffle=True
         )
@@ -49,13 +47,13 @@ class MTGCardAI:
             for epoch in (pbar := trange(num_epochs, desc="Training")):
                 pbar.set_postfix_str(f"Epoch: {epoch}")
                 self._train_epoch(data_loader, optimizer)
-    
+
     def _train_epoch(self, data_loader: DataLoader, optimizer: AdamW):
         for batch in tqdm(data_loader, desc="training on batch"):
             # Move batch to device
-            input_ids = batch[constants.INPUT_IDS]#.to(device)
-            attention_mask = batch[constants.ATTENTION_MASK]#.to(device)
-            labels = batch[constants.LABELS]#.to(device)
+            input_ids = batch[constants.INPUT_IDS]  # .to(device)
+            attention_mask = batch[constants.ATTENTION_MASK]  # .to(device)
+            labels = batch[constants.LABELS]  # .to(device)
             # Forward pass
             outputs = self.model(
                 input_ids,

@@ -1,11 +1,12 @@
 import pandas as pd
 from pathlib import Path
 
+
 def process():
     mtg_data_path = Path("./oracle-cards-20231121100139.json")
     df: pd.DataFrame = pd.read_json(mtg_data_path)
     df = expand_legalities_column(df)
-    
+
     return df
 
 

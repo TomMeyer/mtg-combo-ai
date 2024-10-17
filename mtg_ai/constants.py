@@ -1,147 +1,212 @@
 from enum import StrEnum
-from typing import Final
+from typing import Final, Literal
+import typing
 
 MTG_STANDARD_COLOR_ORDER: Final = "WUBRGC"
 
+MTG_COLOR = Literal[
+    "W", "U", "B", "R", "G", "C", "Green", "Red", "Blue", "White", "Black", "Colorless"
+]
 
-class MTGColorCombo(StrEnum):
-    COLORLESS = ""  # No color
-    MONO_WHITE = "W"  # White
-    MONO_BLUE = "U"  # Blue
-    MONO_BLACK = "B"  # Black
-    MONO_RED = "R"  # Red
-    MONO_GREEN = "G"  # Green
-    AZORIUS = "WU"  # White, Blue
-    DIMIR = "UB"  # Blue, Black
-    RAKDOS = "BR"  # Black, Red
-    GRUUL = "RG"  # Red, Green
-    SELESNYA = "WG"  # Green, White
-    ORZHOV = "WB"  # White, Black
-    IZZET = "UR"  # Blue, Red
-    GOLGARI = "BG"  # Black, Green
-    BOROS = "WR"  # White, Red
-    SIMIC = "UG"  # Blue, Green
-    ESPER = "WUB"  # White, Blue, Black
-    GRIXIS = "UBR"  # Blue, Black, Red
-    JUND = "BRG"  # Black, Red, Green
-    NAYA = "WRG"  # White, Red, Green
-    BANT = "WUG"  # White, Blue, Green
-    ABZAN = "WBG"  # White, Black, Green
-    JESKAI = "WUR"  # White, Blue, Red
-    SULTAI = "UBG"  # Blue, Black, Green
-    MARDU = "WBR"  # White, Black, Red
-    TEMUR = "URG"  # Blue, Red, Green
-    YIDRIS = "UBRG"  # Blue, Black, Red, Green
-    SASKIA = "WBRG"  # White, Black, Red, Green
-    KYNAIOS = "WURG"  # White, Blue, Red, Green
-    ATRAXA = "WUBG"  # White, Blue, Black, Green
-    BREYA = "WUBR"  # White, Blue, Black, Red
-    FIVE_COLOR = "WUBRG"  # White, Blue, Black, Red, Green
 
-    @staticmethod
-    def _sort_multicolor_str(s: str):
-        try:
-            return "".join(
-                sorted(s, key=lambda x: MTG_STANDARD_COLOR_ORDER.index(x.upper()))
-            )
-        except:
-            return s
+class Color(StrEnum):
+    WHITE = "W"
+    BLUE = "U"
+    BLACK = "B"
+    RED = "R"
+    GREEN = "G"
+    COLORLESS = "C"
 
     @classmethod
-    def from_str(cls, s: str):
-        s = cls._sort_multicolor_str(s.upper())
-        return cls(s)
+    def get(cls, name: MTG_COLOR | str) -> "Color":
+        n = name.upper()
+
+        try:
+            return Color[n]
+        except KeyError:
+            pass
+
+        try:
+            return Color(n)
+        except ValueError:
+            pass
+
+        raise ValueError(f"Invalid color: {name}")
 
 
-drop_columns = [
-    "life_modifier",
-    "hand_modifier",
-    "attraction_lights",
-    "object",
-    "multiverse_ids",
-    "mtgo_id",
-    "mtgo_foil_id",
-    "tcgplayer_id",
-    "cardmarket_id",
-    "uri",
-    "scryfall_uri",
-    "highres_image",
-    "image_status",
-    "image_uris",
-    "reserved",
-    "foil",
-    "nonfoil",
-    "finishes",
-    "oversized",
-    "promo",
-    "reprint",
-    "variation",
-    "set_uri",
-    "set_search_uri",
-    "scryfall_set_uri",
-    "prints_search_uri",
-    "flavor_text",
-    "artist_ids",
-    "illustration_id",
-    "border_color",
-    "frame",
-    "textless",
-    "booster",
-    "story_spotlight",
-    "related_uris",
-    "purchase_uris",
-    "security_stamp",
-    "preview",
-    "penny_rank",
-    "frame_effects",
-    "watermark",
-    "card_faces",
-    "tcgplayer_etched_id",
-    "promo_types",
-    "prices",
-    "artist",
-    "digital",
-    "games",
-    "set_id",
-    "set",
-    "set_name",
-    "collector_number",
-    "full_art",
-    "all_parts",
-    "arena_id",
-    "released_at",
-    "content_warning",
-    "card_back_id",
-    "lang",
-    "id",
-    "rulings_uri",
+mtg_colors: tuple[str, ...] = typing.get_args(MTG_COLOR)
+
+
+COLOR_IDENTITY = Literal[
+    "W",
+    "U",
+    "B",
+    "R",
+    "G",
+    "C",
+    "WU",
+    "WB",
+    "WR",
+    "UB",
+    "UR",
+    "WG",
+    "BR",
+    "UG",
+    "BG",
+    "RG",
+    "WUB",
+    "WUR",
+    "WUG",
+    "WBR",
+    "WBG",
+    "UBR",
+    "WRG",
+    "UBG",
+    "URG",
+    "BRG",
+    "WUBR",
+    "WUBG",
+    "WURG",
+    "WBRG",
+    "UBRG",
+    "WUBRG",
+    "Mono White",
+    "Mono Blue",
+    "Mono Black",
+    "Mono Red",
+    "Mono Green",
+    "Azorius",
+    "Orzhov",
+    "Boros",
+    "Dimir",
+    "Izzet",
+    "Selesnya",
+    "Rakdos",
+    "Simic",
+    "Golgari",
+    "Gruul",
+    "Esper",
+    "Jeskai",
+    "Bant",
+    "Mardu",
+    "Abzan",
+    "Grixis",
+    "Naya",
+    "Sultai",
+    "Temur",
+    "Jund",
+    "Yore-Tiller",
+    "Witch-Maw",
+    "Ink-Treader",
+    "Dune",
+    "Glint-Eye",
+    "Five-Color",
+    "Colorless",
 ]
 
-column_order = [
-    "oracle_id",
-    "card_name",
-    "type_line",
-    "rarity",
-    "mana_cost",
-    "cmc",
-    "colors",
-    "color_identity",
-    "power",
-    "toughness",
-    "loyalty",
-    "produced_mana",
-    "keywords",
-    "set_type",
-    "oracle_text",
-    "layout",
-    "edhrec_rank",
-    "color_indicator",
+
+class ColorIdentity(StrEnum):
+    # Mono-color
+    MONO_WHITE = "W"
+    MONO_BLUE = "U"
+    MONO_BLACK = "B"
+    MONO_RED = "R"
+    MONO_GREEN = "G"
+
+    # Two-color
+    AZORIUS = "WU"
+    ORZHOV = "WB"
+    BOROS = "WR"
+    DIMIR = "UB"
+    IZZET = "UR"
+    SELESNYA = "WG"
+    RAKDOS = "BR"
+    SIMIC = "UG"
+    GOLGARI = "BG"
+    GRUUL = "RG"
+    ESPER = "WUB"
+    JESKAI = "WUR"
+
+    # Three-color
+    BANT = "WUG"
+    MARDU = "WBR"
+    ABZAN = "WBG"
+    GRIXIS = "UBR"
+    NAYA = "WRG"
+    SULTAI = "UBG"
+    TEMUR = "URG"
+    JUND = "BRG"
+
+    # Four-color
+    YORE_TILLER = "WUBR"
+    WITCH_MAW = "WUBG"
+    INK_TREADER = "WURG"
+    DUNE = "WBRG"
+    GLINT_EYE = "UBRG"
+
+    FIVE_COLOR = "WUBRG"
+
+    COLORLESS = "C"
+
+    @classmethod
+    def get(cls, name: COLOR_IDENTITY | str) -> "ColorIdentity":
+        name = name.upper().replace("-", "_").replace(" ", "")
+
+        try:
+            return ColorIdentity[name]
+        except KeyError:
+            pass
+
+        try:
+            return ColorIdentity(name)
+        except ValueError:
+            pass
+
+        raise ValueError(f"Invalid color identity: {name}")
+
+
+MTG_CARD_TYPE = Literal[
+    "Land",
+    "Creature",
+    "Enchantment",
+    "Artifact",
+    "Planeswalker",
+    "Instant",
+    "Sorcery",
+    "Battle",
+    "Tribal",
+    "Legendary",
 ]
 
-PAD_TOKEN = "[PAD]"
 
-INPUT_IDS: Final = "input_ids"
-ATTENTION_MASK: Final = "attention_mask"
+class CardType(StrEnum):
+    LAND = "Land"
+    CREATURE = "Creature"
+    ENCHANTMENT = "Enchantment"
+    ARTIFACT = "Artifact"
+    PLANESWALKER = "Planeswalker"
+    INSTANT = "Instant"
+    SORCERY = "Sorcery"
+    BATTLE = "Battle"
+    TRIBAL = "Tribal"
+
+    @classmethod
+    def get(cls, name: MTG_CARD_TYPE | str) -> "CardType":
+        name = name.capitalize()
+
+        try:
+            return CardType[name.upper()]
+        except KeyError:
+            pass
+
+        try:
+            return CardType(name)
+        except ValueError:
+            pass
+
+        raise ValueError(f"Invalid card type: {name}")
+
+
 CATEGORY: Final = "category"
 LABELS: Final = "labels"
 

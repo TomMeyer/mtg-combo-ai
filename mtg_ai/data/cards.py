@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any
 import pandas as pd
 import mtg_ai.constants as constants
 
@@ -9,17 +8,32 @@ def remove_uneeded_columns(df: pd.DataFrame):
     df = df.drop(constants.drop_columns, axis=1)
     return df
 
+
 def filter_for_modern(df: pd.DataFrame):
     legalities = pd.json_normalize(df.pop("legalities"))
     df = df.loc[legalities["modern"] == "legal"].reset_index(drop=True)
     return df
 
+
 def fill_empty_values(df: pd.DataFrame):
-    fill_values = dict.fromkeys(["mana_cost", "colors", "color_identity", "produced_mana", "color_indicator"], constants.NA_STRING)
-    fill_values.update(dict.fromkeys(["power", "toughness", "loyalty", ], constants.NAN_STRING))
+    fill_values = dict.fromkeys(
+        ["mana_cost", "colors", "color_identity", "produced_mana", "color_indicator"],
+        constants.NA_STRING,
+    )
+    fill_values.update(
+        dict.fromkeys(
+            [
+                "power",
+                "toughness",
+                "loyalty",
+            ],
+            constants.NAN_STRING,
+        )
+    )
     fill_values["edhrec_rank"] = 0
     df.fillna(fill_values, inplace=True)
     return df
+
 
 def merge_lists(df: pd.DataFrame):
     df.keywords = df.keywords.str.join(", ")
@@ -27,10 +41,12 @@ def merge_lists(df: pd.DataFrame):
     df[columns] = df[columns].map(lambda x: "".join(x))
     return df
 
+
 def sort_color_strings(df: pd.DataFrame):
     columns = ["colors", "color_identity", "color_indicator", "produced_mana"]
     df[columns] = df[columns].map(constants.MTGColorCombo._sort_multicolor_str)
     return df
+
 
 def convert_column_types(df: pd.DataFrame):
     data = {
@@ -54,6 +70,7 @@ def convert_column_types(df: pd.DataFrame):
     }
     df = df.astype(data)
     return df
+
 
 mtg_data_path = Path("./data/oracle-cards-20231121100139.json")
 
@@ -85,5 +102,3 @@ MTGCards: pd.DataFrame = (
 #     rulings_df = pd.read_json(mtg_ruling_path)
 #     df = df.merge(rulings_df, left_index=True, right_index=True)
 #     return df
-
-

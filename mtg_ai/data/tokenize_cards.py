@@ -7,9 +7,10 @@ from mtg_ai import constants
 
 
 class MTGCardDataset(Dataset):
-    
     def __init__(self):
-        self.tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained("Intel/neural-chat-7b-v3")
+        self.tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained(
+            "Intel/neural-chat-7b-v3"
+        )
         self.tokenized_data = tokenize(MTGCards, self.tokenizer)
 
     def __len__(self):
@@ -32,8 +33,8 @@ def tokenize(df: pd.DataFrame, tokenizer):
         combined_str = combined_str.strip()
         combined_str_data[index] = combined_str
     result = []
-    
-    #340
+
+    # 340
     for k, v in tqdm(combined_str_data.items(), desc="tokenizing rows"):
         encoding = tokenizer(
             text=v,
