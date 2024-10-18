@@ -1,19 +1,20 @@
 MTG AI
 ------
 
-# BADGES GO HERE
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/TomMeyer/mtg-combo-ai/main.svg)](https://results.pre-commit.ci/latest/github/TomMeyer/mtg-combo-ai/main)
 
 Overview
 ========
 
-Magic the Gathering LLM for creating card combinations.
+Magic the Gathering LLM for general magic questions and creating card combinations.
 
 Trained using data on cards and popular combinations.
 
 Installation
 ============
 
-Do the things
+```bash 
+```
 
 Usage
 =====
