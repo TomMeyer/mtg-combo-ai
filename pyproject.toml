@@ -1,9 +1,74 @@
 [build-system]
-build-requirements = []
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/mtg_ai/__init__.py"
 
 [project]
 name = "mtg-ai"
+description = "Magic the Gathering general information and combo llama-based LLM"
+authors = [{name = "Thomas Meyer", email = "thomas@thomasmeyer.co" }]
+requires-python = ">=3.11,<3.12"
+dynamic = ["version"]
+dependencies = ["rapidfuzz>=3.10.0,<4"]
 
-[tool.black]
-line-length = 90
-target-version = ["py311"]
+[tool.pixi.project]
+channels = [ "nvidia", "pytorch", "conda-forge", "anaconda", "xformers"]
+platforms = ["linux-64"]
+
+[tool.pixi.tasks]
+lint = "pre-commit run --all-files"
+test = "pytest"
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+test = { features = ["test"], solve-group = "default" }
+dev = { features = ["dev", "test"], solve-group = "default" }
+
+[tool.pixi.dependencies]
+pytorch-cuda = "12.1"
+pytorch = "2.4.1"
+xformers = {version="0.0.28.post1", channel = "xformers"}
+
+[tool.pixi.pypi-dependencies]
+mtg-ai = { path = ".", editable = true }
+unsloth = { git = "https://github.com/unslothai/unsloth.git", extras=["colab-new"]}
+peft = ">=0.13.2"
+datasets =">=3.0.1,<4"
+trl = ">=0.11.1"
+bitsandbytes = ">=0.44.1,<0.45"
+
+[tool.pixi.feature.dev.dependencies]
+colorlog = ">=6.8.2,<7"
+
+[project.optional-dependencies]
+test = ["pytest"]
+dev = ["ruff", "jupyterlab", "ipython", "tensorboard", "pixi-kernel", "ipywidgets>=8.1.5,<9"]
+
+# Extra tool configs
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+fix = true
+exclude = [
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".tox",
+    ".venv",
+    "_build",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I"]
+fixable = ["E", "F", "B", "I"]
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 20
+
+

@@ -1,15 +1,14 @@
+import inspect
 import json
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 from typing import Callable, Final
 
 import datasets
-
 import tqdm
 
 from mtg_ai.cards.database import MTGDatabase
-import inspect
 
 QUESTION_ANSWER_FILE = Path.home().joinpath(
     ".cache", "mtg-ai", "question_answer_dataset.json"
@@ -61,7 +60,10 @@ def build_question_answer_datasets(data: MTGDatabase, recreate: bool = False):
     file_size = QUESTION_ANSWER_FILE.stat().st_size / 1024 / 1024
 
     print(
-        f"Finished creating question answer dataset in {time.time() - start_time} seconds | file size: {file_size:.2f} MB"
+        (
+            "Finished creating question answer dataset in "
+            f"{time.time() - start_time} seconds | file size: {file_size:.2f} MB"
+        )
     )
 
 
