@@ -186,8 +186,8 @@ class MTGDatabase:
                     .astype(pd.Int8Dtype())
                     .astype(pd.CategoricalDtype(ordered=True))
                 )
-            except Exception:
-                raise ValueError(f"Failed to convert {column} to int")
+            except Exception as e:
+                raise ValueError(f"Failed to convert {column} to int") from e
 
         convert_float_to_int_to_category("manaValue")
         convert_float_to_int_to_category("faceConvertedManaCost")
