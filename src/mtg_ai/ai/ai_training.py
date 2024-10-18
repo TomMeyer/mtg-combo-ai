@@ -7,13 +7,11 @@ from typing import Optional
 
 import torch
 from datasets import Dataset
-from peft import get_peft_model
 from peft.peft_model import PeftModel
 from transformers import DataCollatorForSeq2Seq, TrainingArguments
 from trl import SFTTrainer
 from unsloth import FastLanguageModel, is_bfloat16_supported
 from unsloth.chat_templates import get_chat_template, train_on_responses_only
-from unsloth.tokenizer_utils import AutoTokenizer
 
 from mtg_ai.cards.training_data_builder import read_mtg_dataset_from_disk
 
@@ -23,7 +21,6 @@ PathLike = str | Path | os.PathLike[str]
 
 
 class MTGCardAITrainingDatasetLoader:
-
     def __init__(
         self,
         tokenizer,
@@ -41,7 +38,9 @@ class MTGCardAITrainingDatasetLoader:
             return {"text": texts}
 
         logger.info(f"Tokenizing dataset with {num_procs} processes")
-        formatted_dataset = dataset.map(format_prompt, num_proc=num_procs or cpu_count() - 1, batched=True)  # type: ignore
+        formatted_dataset = dataset.map(
+            format_prompt, num_proc=num_procs or cpu_count() - 1, batched=True
+        )  # type: ignore
         logger.info("finished tokenizing dataset")
 
         self.dataset = formatted_dataset.train_test_split(test_size=0.2)  # type: ignore
@@ -174,7 +173,6 @@ class MTGCardAITrainer:
         logger.debug(f"{start_gpu_memory} GB of memory reserved.")
 
     def train(self, resume_from_checkpoint: bool = False) -> None:
-
         logger.info("Starting training")
         logger.info(f"Training {self.model} for {self.num_epochs} epochs")
 
@@ -182,7 +180,10 @@ class MTGCardAITrainer:
 
         if logger.level == DEBUG:
             logger.debug(
-                f"Check our dataset applied masking: {self.tokenizer.decode(trainer.train_dataset[5]['input_ids'])}"
+                (
+                    "Check our dataset applied masking"
+                    f"{self.tokenizer.decode(trainer.train_dataset[5]['input_ids'])}"
+                )
             )
             space = self.tokenizer(" ", add_special_tokens=False).input_ids[0]
             d = [space if x == -100 else x for x in trainer.train_dataset[5]["labels"]]
@@ -198,36 +199,35 @@ class MTGCardAITrainer:
         self.model.save_pretrained(
             "./results",
         )
-        self.model
         logger.info("Model saved to ./results")
         logger.info("Finished saving model")
         logger.info("Model is now ready")
 
 
-def save_combined_model(
-    model_name: str,
-    model_dir: Path,
-    tokenizer_name: str,
-    gguf_file: Optional[str] = None,
-) -> None:
-    merged_model_output = model_dir.joinpath("merged_model")
+# def save_combined_model(
+#     model_name: str,
+#     model_dir: Path,
+#     tokenizer_name: str,
+#     gguf_file: Optional[str] = None,
+# ) -> None:
+#     merged_model_output = model_dir.joinpath("merged_model")
 
-    logger.info("Loading model")
-    # model = AutoModelForCausalLM.from_pretrained(model_name, gguf_file=gguf_file)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logger.info("Loading tokenizer")
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+#     logger.info("Loading model")
+#     # model = AutoModelForCausalLM.from_pretrained(model_name, gguf_file=gguf_file)
+#     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#     logger.info("Loading tokenizer")
+#     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
-    model: PeftModel = get_peft_model(model, str(model_dir))
-    model = model.to(device)
+#     model: PeftModel = get_peft_model(model, str(model_dir))
+#     model = model.to(device)
 
-    for name, param in model.named_parameters():
-        logger.debug(f"Layer: {name}, dtype: {param.dtype}, shape: {param.shape}")
+#     for name, param in model.named_parameters():
+#         logger.debug(f"Layer: {name}, dtype: {param.dtype}, shape: {param.shape}")
 
-    logger.info("Merging model")
-    model = model.merge_and_unload()
-    logger.info("Saving model")
-    model.save_pretrained(str(merged_model_output))
-    logger.info("Saving tokenizer")
-    tokenizer.save_pretrained(str(merged_model_output))
-    logger.info("Finished saving model")
+#     logger.info("Merging model")
+#     model = model.merge_and_unload()
+#     logger.info("Saving model")
+#     model.save_pretrained(str(merged_model_output))
+#     logger.info("Saving tokenizer")
+#     tokenizer.save_pretrained(str(merged_model_output))
+#     logger.info("Finished saving model")

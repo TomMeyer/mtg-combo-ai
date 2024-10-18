@@ -60,14 +60,20 @@ class ModelAndTokenizer(Enum):
     )
 
     def __init__(
-        self, value: str, tokenizer: Optional[str] = None, gguf_file: Optional[str] = None
+        self,
+        value: str,
+        tokenizer: Optional[str] = None,
+        gguf_file: Optional[str] = None,
     ):
         self._value_ = value
         self.tokenizer = tokenizer or value
         self.gguf_file = gguf_file
 
     def __new__(
-        cls, value: str, tokenizer: Optional[str] = None, gguf_file: Optional[str] = None
+        cls,
+        value: str,
+        tokenizer: Optional[str] = None,
+        gguf_file: Optional[str] = None,
     ):
         obj = object.__new__(cls)
         obj._value_ = value

@@ -1,24 +1,21 @@
 import json
 import logging
-from pathlib import Path
+from logging import getLogger
 from typing import Any, Optional
+
 import torch
+from peft import PeftModel
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
     PreTrainedModel,
 )
-from transformers.models.llama.modeling_llama import LlamaForCausalLM
-from transformers.models.llama.tokenization_llama_fast import LlamaTokenizerFast
-from logging import getLogger
-from peft import PeftModel
 
 logger = getLogger(__name__)
 
 
 class MTGCardAI:
-
     def __init__(
         self,
         model_name: str,
@@ -35,10 +32,6 @@ class MTGCardAI:
         self._model = None
         self._tokenizer = None
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    def load_models(self):
-        self.tokenizer
-        self.model
 
     @property
     def tokenizer(self):
@@ -79,7 +72,7 @@ class MTGCardAI:
         You are a Magic the Gathering information bot. 
         You are here to help users with their questions about Magic the Gathering.
         You know information about magic the gathering cards, rules, and other information.
-        """
+        """  # noqa: E501
 
     def _build_prompt(self, prompt: str) -> list[dict[str, Any]]:
         return [
