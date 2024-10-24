@@ -11,7 +11,7 @@ description = "Magic the Gathering general information and combo llama-based LLM
 authors = [{name = "Thomas Meyer", email = "thomas@thomasmeyer.co" }]
 requires-python = ">=3.11,<3.12"
 dynamic = ["version"]
-dependencies = ["rapidfuzz>=3.10.0,<4"]
+dependencies = []
 
 [tool.pixi.project]
 channels = [ "nvidia", "pytorch", "conda-forge", "anaconda", "xformers"]
@@ -30,21 +30,26 @@ dev = { features = ["dev", "test"], solve-group = "default" }
 pytorch-cuda = "12.1"
 pytorch = "2.4.1"
 xformers = {version="0.0.28.post1", channel = "xformers"}
+haystack-ai = ">=2.5.0,<3"
 
 [tool.pixi.pypi-dependencies]
 mtg-ai = { path = ".", editable = true }
 unsloth = { git = "https://github.com/unslothai/unsloth.git", extras=["colab-new"]}
+transformers = { git = "https://github.com/huggingface/transformers.git"}
 peft = ">=0.13.2"
 datasets =">=3.0.1,<4"
 trl = ">=0.11.1"
 bitsandbytes = ">=0.44.1,<0.45"
+rapidfuzz = ">=3.10.0,<4"
+sentence-transformers = ">=3.2.0,<4"
 
 [tool.pixi.feature.dev.dependencies]
 colorlog = ">=6.8.2,<7"
+ipykernel = ">=6.29.5,<7"
 
 [project.optional-dependencies]
 test = ["pytest"]
-dev = ["ruff", "jupyterlab", "ipython", "tensorboard", "pixi-kernel", "ipywidgets>=8.1.5,<9"]
+dev = ["ruff", "jupyterlab", "ipython", "pixi-kernel", "ipywidgets>=8.1.5,<9", "tensorboard>=2.18.0,<3", "torch-tb-profiler>=0.4.3,<0.5"]
 
 # Extra tool configs
 
@@ -61,11 +66,13 @@ exclude = [
     "_build",
     "build",
     "dist",
+    ".ipynb",
 ]
 
 [tool.ruff.lint]
 select = ["E", "F", "B", "I"]
 fixable = ["E", "F", "B", "I"]
+ignore = ["E501"]
 
 [tool.ruff.format]
 docstring-code-format = true

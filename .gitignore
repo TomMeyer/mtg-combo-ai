@@ -230,3 +230,5 @@ logs/
 .pixi
 *.egg-info
 .gitattributes
+
+mtg_ai_rag_cache/

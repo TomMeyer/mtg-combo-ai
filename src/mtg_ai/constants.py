@@ -1,5 +1,7 @@
+import os
 import typing
 from enum import StrEnum
+from pathlib import Path
 from typing import Final, Literal
 
 MTG_STANDARD_COLOR_ORDER: Final = "WUBRGC"
@@ -7,6 +9,8 @@ MTG_STANDARD_COLOR_ORDER: Final = "WUBRGC"
 MTG_COLOR = Literal[
     "W", "U", "B", "R", "G", "C", "Green", "Red", "Blue", "White", "Black", "Colorless"
 ]
+
+PathLike = str | Path | os.PathLike[str]
 
 
 class Color(StrEnum):
