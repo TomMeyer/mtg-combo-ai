@@ -3416,7 +3416,7 @@ packages:
   name: mtg-ai
   version: 0.1.0
   path: .
-  sha256: 0bf7e63ecc7da92cdf8aa7f0f9221962c5a4251e3875718141e450b9f5a28a18
+  sha256: 4718c67e04e8d4d5cab54aa92af83f6d12fe080acb163c3a96825d7d9cfb7824
   requires_dist:
   - ipython ; extra == 'dev'
   - ipywidgets<9,>=8.1.5 ; extra == 'dev'

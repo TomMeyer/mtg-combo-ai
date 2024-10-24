@@ -66,12 +66,13 @@ exclude = [
     "_build",
     "build",
     "dist",
+    ".ipynb",
 ]
-ignore = ["E501"]
 
 [tool.ruff.lint]
 select = ["E", "F", "B", "I"]
 fixable = ["E", "F", "B", "I"]
+ignore = ["E501"]
 
 [tool.ruff.format]
 docstring-code-format = true
