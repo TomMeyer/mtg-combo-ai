@@ -1,8 +1,6 @@
 import datetime
-import os
 from logging import DEBUG, getLogger
 from multiprocessing import cpu_count
-from pathlib import Path
 from typing import Optional
 
 import torch
@@ -10,14 +8,15 @@ from datasets import Dataset
 from peft.peft_model import PeftModel
 from transformers import DataCollatorForSeq2Seq, TrainingArguments
 from trl import SFTTrainer
-from unsloth import FastLanguageModel, is_bfloat16_supported
+from unsloth import (
+    FastLanguageModel,
+    is_bfloat16_supported,
+)
 from unsloth.chat_templates import get_chat_template, train_on_responses_only
 
 from mtg_ai.cards.training_data_builder import read_mtg_dataset_from_disk
 
 logger = getLogger(__name__)
-
-PathLike = str | Path | os.PathLike[str]
 
 
 class MTGCardAITrainingDatasetLoader:
@@ -65,7 +64,7 @@ class MTGCardAITrainer:
         model_name: str,
         gguf_file: Optional[str] = None,
         num_epochs: int = 3,
-        max_seq_length: int = 100,
+        max_seq_length: int = 500,
     ) -> None:
         # set properties
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -80,34 +79,34 @@ class MTGCardAITrainer:
         self.data_loader = MTGCardAITrainingDatasetLoader(tokenizer=tokenizer)
 
     @classmethod
-    def _get_model_and_tokenizer(cls, model_name: str, max_sequence_length: int = 2048):
+    def _get_model_and_tokenizer(cls, model_name: str, max_sequence_length: int = 500):
         logger.info(f"loading model and tokenizer {model_name}")
         model, tokenizer = FastLanguageModel.from_pretrained(
             model_name,
             dtype=torch.bfloat16,
             max_seq_length=max_sequence_length,
         )
-        model = FastLanguageModel.get_peft_model(
-            model,
-            r=16,
-            lora_alpha=16,
-            target_modules=[
-                "q_proj",
-                "k_proj",
-                "v_proj",
-                "o_proj",
-                "gate_proj",
-                "up_proj",
-                "down_proj",
-            ],
-            lora_dropout=0,
-            bias="none",
-            use_gradient_checkpointing="unsloth",
-            random_state=3047,
-            max_seq_length=max_sequence_length,
-            use_rslora=False,
-            loftq_config=None,
-        )
+        # model = FastLanguageModel.get_peft_model(
+        #     model,
+        #     r=16,
+        #     lora_alpha=16,
+        #     target_modules=[
+        #         "q_proj",
+        #         "k_proj",
+        #         "v_proj",
+        #         "o_proj",
+        #         "gate_proj",
+        #         "up_proj",
+        #         "down_proj",
+        #     ],
+        #     lora_dropout=0,
+        #     bias="none",
+        #     use_gradient_checkpointing="unsloth",
+        #     random_state=3047,
+        #     max_seq_length=max_sequence_length,
+        #     use_rslora=False,
+        #     loftq_config=None,
+        # )
         tokenizer = get_chat_template(tokenizer, chat_template="llama-3.1")
         return model, tokenizer
 
@@ -119,19 +118,19 @@ class MTGCardAITrainer:
         logger.info(f"Can use bfloat16: {is_bfloat16_supported()}")
         training_args = TrainingArguments(
             per_device_train_batch_size=32,
-            per_device_eval_batch_size=8,
-            gradient_accumulation_steps=2,
+            per_device_eval_batch_size=32,
+            gradient_accumulation_steps=1,
             warmup_steps=5,
             num_train_epochs=1,  # Set this for 1 full training run.
             max_steps=-1,
-            learning_rate=2e-4,
+            learning_rate=2e-5,
             fp16=not is_bfloat16_supported(),
             bf16=is_bfloat16_supported(),
             optim="adamw_8bit",
-            weight_decay=0.01,
+            weight_decay=1e-5,
             lr_scheduler_type="linear",
             seed=3407,
-            logging_steps=25,
+            logging_steps=250,
             output_dir="outputs",
             log_level="info",
             logging_dir=f"./logs/{self.model_name}/{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}",
@@ -151,7 +150,7 @@ class MTGCardAITrainer:
             dataset_text_field="text",
             max_seq_length=self.max_seq_length,
             data_collator=DataCollatorForSeq2Seq(tokenizer=tokenizer),
-            dataset_num_proc=9,
+            dataset_num_proc=cpu_count() - 1,
             packing=False,
             args=training_args,  # type: ignore
         )
@@ -169,14 +168,17 @@ class MTGCardAITrainer:
         )
         max_memory = round(gpu_stats.total_memory / 1024 / 1024 / 1024, 3)
         logger.info(f"Using GPU: {self.device}")
-        logger.debug(f"GPU = {gpu_stats.name}. Max memory = {max_memory} GB.")
-        logger.debug(f"{start_gpu_memory} GB of memory reserved.")
+        logger.info(f"GPU = {gpu_stats.name}. Max memory = {max_memory} GB.")
+        logger.info(f"{start_gpu_memory} GB of memory reserved.")
 
     def train(self, resume_from_checkpoint: bool = False) -> None:
         logger.info("Starting training")
         logger.info(f"Training {self.model} for {self.num_epochs} epochs")
 
         trainer = self.build_trainer()
+
+        if trainer.train_dataset is None:
+            raise ValueError("No training dataset loaded")
 
         if logger.level == DEBUG:
             logger.debug(
@@ -191,17 +193,20 @@ class MTGCardAITrainer:
 
         self.print_gpu_stats()
         trainer.train(resume_from_checkpoint=resume_from_checkpoint)  # type: ignore
-        logger.info("Training complete")
-        logger.info("Evaluating model")
-        eval_results = trainer.evaluate(ignore_keys=["predictions"])
-        logger.info(eval_results)
+        # unsloth_train(trainer)
         logger.info("Saving model")
         self.model.save_pretrained(
             "./results",
         )
         logger.info("Model saved to ./results")
-        logger.info("Finished saving model")
-        logger.info("Model is now ready")
+        logger.info("Training complete")
+
+        if trainer.eval_dataset is not None:
+            logger.info("Evaluating model")
+            eval_results = trainer.evaluate(ignore_keys=["predictions"])
+            logger.info(eval_results)
+
+        logger.info("Model is now ready to be used for inference")
 
 
 # def save_combined_model(
