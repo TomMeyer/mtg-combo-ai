@@ -1,13 +1,11 @@
 import json
 from logging import getLogger
-from typing import Any, Optional
+from threading import Thread
+from typing import Any, Generator, Optional
 
 import torch
 from peft import PeftModel
-from transformers import (
-    BatchEncoding,
-    TextStreamer,
-)
+from transformers import BatchEncoding, TextIteratorStreamer
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 from unsloth import FastLanguageModel
 
@@ -85,7 +83,7 @@ class MTGCardAI:
         max_new_tokens: int = 500,
         temperature: float = 0.1,
         min_p: float = 0.1,
-    ) -> str:
+    ) -> Generator[str, None, None]:
         logger.debug(f"running model with prompt:\n{prompt}")
         messages = self._build_prompt(prompt=prompt, rag_data=rag_data)
         logger.debug(f"structered prompt:\n{json.dumps(messages, indent=2)}")
@@ -102,18 +100,19 @@ class MTGCardAI:
 
         # tokenized_prompt.to("cuda")  # type: ignore
 
-        text_stramer = TextStreamer(
+        text_streamer = TextIteratorStreamer(
             tokenizer=self.tokenizer, skip_prompt=True, skip_special_tokens=True
         )  # type: ignore
-        _ = self.model.generate(
-            tokenized_prompt,
-            streamer=text_stramer,
+        # dict(inputs, streamer=streamer, max_new_tokens=20)
+        generation_kwargs = dict(
+            inputs=tokenized_prompt,
+            streamer=text_streamer,
             use_cache=True,
             max_new_tokens=max_new_tokens,
             temperature=temperature,
             min_p=min_p,
         )
-        # TODO: Handle response
-        # decoded_response = self.tokenizer.decode(response, skip_special_tokens=True)
-        # decoded_response = decoded_response.replace("<|eot_id|>", "")
-        # return decoded_response
+
+        thread = Thread(target=self.model.generate, kwargs=generation_kwargs)
+        thread.start()
+        yield from text_streamer

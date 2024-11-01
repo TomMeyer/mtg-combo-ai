@@ -1,6 +1,7 @@
 from mtg_ai.ai.ai_model import MTGCardAI
 from mtg_ai.ai.ai_training import (
     MTGCardAITrainer,
+    MTGCardAITrainerPipeline,
     MTGCardAITrainingDatasetLoader,
 )
 from mtg_ai.ai.rag import MTGRAGSearchSystem
@@ -14,4 +15,5 @@ __all__ = [
     "MTGCardAI",
     "MTGRAGSearchSystem",
     "MTGAIRunner",
+    "MTGCardAITrainerPipeline",
 ]

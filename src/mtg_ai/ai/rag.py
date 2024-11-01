@@ -20,13 +20,9 @@ from tqdm.auto import tqdm
 
 from mtg_ai.cards import MTGDatabase
 from mtg_ai.constants import PathLike
+from mtg_ai.utils import is_tqdm_disabled
 
 logger = logging.getLogger(__name__)
-
-
-# split_card_name_regex = re.compile(
-#     r"Card\s+Name:\s*(?<name_a>[^/]+?)\s*//\s*(?<name_b>.+)", re.IGNORECASE
-# )
 
 
 @dataclass
@@ -40,17 +36,6 @@ class SearchResult:
     def format(self) -> str:
         if not self.content:
             raise ValueError(f"No content found for search result {self.card_name}")
-
-        # if "side" in self.content and "//" in self.content:
-        #     matches = split_card_name_regex.finditer(self.content)
-        #     for match in matches:
-        #         full_card_name = match.group(0)
-        #         name_a = match.group("name_a")
-        #         name_b = match.group("name_b")
-        #         if "Side: a" in self.content:
-        #             self.content.replace(full_card_name, name_a)
-        #         elif "Side: b" in self.content:
-        #             self.content.replace(full_card_name, name_b)
 
         metadata_lines = []
         if "mana_cost" in self.metadata and not self.metadata["mana_cost"].isspace():
@@ -104,9 +89,11 @@ class MTGRAGSearchSystem:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # initialize embedders
         self.document_embedder = SentenceTransformersDocumentEmbedder(
-            model=embedding_model
+            model=embedding_model, progress_bar=not is_tqdm_disabled()
         )
-        self.text_embedder = SentenceTransformersTextEmbedder(model=embedding_model)
+        self.text_embedder = SentenceTransformersTextEmbedder(
+            model=embedding_model, progress_bar=not is_tqdm_disabled()
+        )
         self.document_embedder.warm_up()
         self.text_embedder.warm_up()
 
@@ -126,7 +113,11 @@ class MTGRAGSearchSystem:
         # database.df["text"] = database.df.text.fillna(" ")
         logger.debug(f"Building Documents for {len(self.database.df)} cards")
         documents = []
-        for _, row in tqdm(self.database.df.iterrows(), desc="Building Documents"):
+        for _, row in tqdm(
+            self.database.df.iterrows(),
+            desc="Building Documents",
+            disable=is_tqdm_disabled(),
+        ):
             card_dict = row.dropna().to_dict()
             content_parts = []
 
