@@ -1,12 +1,17 @@
+import logging
 import sqlite3
 from dataclasses import dataclass
-from pathlib import Path
 from typing import ClassVar, Literal
 
 import pandas as pd
 import rapidfuzz
 
-from mtg_ai.cards.utils import color_to_identity, sort_colors, strip_commas
+from mtg_ai.cards.utils import (
+    MTG_CACHE_DIR,
+    color_to_identity,
+    sort_colors,
+    strip_commas,
+)
 from mtg_ai.constants import (
     COLOR_IDENTITY,
     MTG_CARD_TYPE,
@@ -16,7 +21,8 @@ from mtg_ai.constants import (
     ColorIdentity,
 )
 
-MTG_CACHE_DIR = Path.home().joinpath(".cache", "mtg-ai")
+logger = logging.getLogger(__name__)
+
 MTG_SQLITE_FILE = MTG_CACHE_DIR.joinpath("AllPrintings.sqlite")
 MTG_FILTERED_SQLITE_FILE = MTG_CACHE_DIR.joinpath("FilteredPrintings.sqlite")
 
@@ -25,7 +31,7 @@ WITH
     rulings AS (
         SELECT
             uuid,
-            GROUP_CONCAT(text, ' ') as text
+            GROUP_CONCAT(text, '\n') as text
         FROM
             cardRulings
         GROUP BY
@@ -73,7 +79,9 @@ SELECT
     rc.supertypes,
     rc.subsets,
     rc.text,
-    rc.cardParts
+    rc.originalText,
+    rc.cardParts,
+    r.text AS rulings
 FROM
     ranked_cards rc
     LEFT JOIN rulings r ON r.uuid = rc.uuid
@@ -89,12 +97,13 @@ def _get_mtg_sqlite_file():
     import requests
 
     mtgjson_download_url = "https://mtgjson.com/api/v5/AllPrintings.sqlite.gz"
+    logger.info(f"Downloading MTGJSON sqlite file from {mtgjson_download_url}")
 
     if not MTG_CACHE_DIR.exists():
         MTG_CACHE_DIR.mkdir(parents=True)
 
-    resposne = requests.get(mtgjson_download_url, stream=True)
-    with gzip.GzipFile(fileobj=resposne.raw) as f_in:
+    response = requests.get(mtgjson_download_url, stream=True)
+    with gzip.GzipFile(fileobj=response.raw) as f_in:
         with MTG_SQLITE_FILE.open("wb") as f_out:
             shutil.copyfileobj(f_in, f_out)
 
@@ -104,6 +113,7 @@ def _build_filtered_sqlite():
         _get_mtg_sqlite_file()
     if MTG_FILTERED_SQLITE_FILE.exists():
         return
+    logger.info("Building filtered sqlite database")
     # Read the AllPrintings.sql file and run the filtered_cards.sql script
     conn = sqlite3.connect(MTG_SQLITE_FILE)
     cursor = conn.execute(BUILD_FILTER_SQL_COMMAND)
@@ -165,7 +175,6 @@ class MTGDatabase:
                 "edhrecSaltiness": pd.Float32Dtype(),
                 "keywords": pd.CategoricalDtype(),
                 "language": pd.CategoricalDtype(),
-                "layout": pd.CategoricalDtype(),
                 "leadershipSkills": pd.CategoricalDtype(),
                 "rarity": pd.CategoricalDtype(),
                 "side": pd.CategoricalDtype(),
@@ -174,7 +183,10 @@ class MTGDatabase:
                 "supertypes": pd.CategoricalDtype(),
                 "subsets": pd.CategoricalDtype(),
                 "text": pd.StringDtype(),
+                "originalText": pd.StringDtype(),
+                "layout": pd.CategoricalDtype(),
                 "cardParts": pd.CategoricalDtype(),
+                "rulings": pd.StringDtype(),
             },
         )
 
