@@ -1,4 +1,9 @@
+from pathlib import Path
+from typing import Any, Callable, Generic, TypeVar
+
 from mtg_ai.constants import ColorIdentity
+
+MTG_CACHE_DIR = Path.home().joinpath(".cache", "mtg-ai")
 
 
 def strip_brackets(x):
@@ -28,3 +33,15 @@ def color_to_identity(x) -> str:
     if x is None or x == "":
         x = "C"
     return ColorIdentity(x).name.title().replace("_", " ")
+
+
+T = TypeVar("T")
+R = TypeVar("R")
+
+
+class classproperty(Generic[T, R]):
+    def __init__(self, func: Callable[[type[T]], R]) -> None:
+        self.func = func
+
+    def __get__(self, obj: Any, cls: type[T]) -> R:
+        return self.func(cls)
