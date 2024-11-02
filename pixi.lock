@@ -169,7 +169,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/e2/d1/a1d3189e7873408b9dc396aef0d7926c198b0df2aa3ddb5b539d3e89a70f/shtab-1.7.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/4b/2c/ffbf7a134b9ab11a67b0cf0726453cedd9c5043a4fe7a35d1cefa9a1bcfb/threadpoolctl-3.5.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/09/6c/1b573998fe3f0e18ac5d434e43966de2d225d6837f099ce0df7df4274c87/tokenizers-0.20.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      - pypi: git+https://github.com/huggingface/transformers.git@405b56269812056d9593869e22b7b264d806cb1e
+      - pypi: git+https://github.com/huggingface/transformers.git@33868a057c02f0368ba63bd1edb746be38fe3d90
       - pypi: https://files.pythonhosted.org/packages/e4/dd/d2cf3dbc1013cee71ceef584f5ab69915fc05d209ef1e276f8652058c350/trl-0.11.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/60/ec/e34d546cfd9c5b906d1d534bb75557be9f2b179609d60bb9e97ec07e8ead/tyro-0.8.14-py3-none-any.whl
       - pypi: git+https://github.com/unslothai/unsloth.git@a2f8db3e7341f983af5814a2c56f54fa29ee548d
@@ -432,7 +432,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/e6/34/ebdc18bae6aa14fbee1a08b63c015c72b64868ff7dae68808ab500c492e2/tinycss2-1.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/09/6c/1b573998fe3f0e18ac5d434e43966de2d225d6837f099ce0df7df4274c87/tokenizers-0.20.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/46/d0/891ec43349f287ea5c313ebc1320e4eda38ccd4c7a0951657213467eaab5/torch_tb_profiler-0.4.3-py3-none-any.whl
-      - pypi: git+https://github.com/huggingface/transformers.git@405b56269812056d9593869e22b7b264d806cb1e
+      - pypi: git+https://github.com/huggingface/transformers.git@33868a057c02f0368ba63bd1edb746be38fe3d90
       - pypi: https://files.pythonhosted.org/packages/e4/dd/d2cf3dbc1013cee71ceef584f5ab69915fc05d209ef1e276f8652058c350/trl-0.11.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/35/d6/ba5f61958f358028f2e2ba1b8e225b8e263053bd57d3a79e2d2db64c807b/types_python_dateutil-2.9.0.20241003-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/60/ec/e34d546cfd9c5b906d1d534bb75557be9f2b179609d60bb9e97ec07e8ead/tyro-0.8.14-py3-none-any.whl
@@ -620,7 +620,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/e2/d1/a1d3189e7873408b9dc396aef0d7926c198b0df2aa3ddb5b539d3e89a70f/shtab-1.7.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/4b/2c/ffbf7a134b9ab11a67b0cf0726453cedd9c5043a4fe7a35d1cefa9a1bcfb/threadpoolctl-3.5.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/09/6c/1b573998fe3f0e18ac5d434e43966de2d225d6837f099ce0df7df4274c87/tokenizers-0.20.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      - pypi: git+https://github.com/huggingface/transformers.git@405b56269812056d9593869e22b7b264d806cb1e
+      - pypi: git+https://github.com/huggingface/transformers.git@33868a057c02f0368ba63bd1edb746be38fe3d90
       - pypi: https://files.pythonhosted.org/packages/e4/dd/d2cf3dbc1013cee71ceef584f5ab69915fc05d209ef1e276f8652058c350/trl-0.11.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/60/ec/e34d546cfd9c5b906d1d534bb75557be9f2b179609d60bb9e97ec07e8ead/tyro-0.8.14-py3-none-any.whl
       - pypi: git+https://github.com/unslothai/unsloth.git@a2f8db3e7341f983af5814a2c56f54fa29ee548d
@@ -3416,7 +3416,7 @@ packages:
   name: mtg-ai
   version: 0.1.0
   path: .
-  sha256: 8114b7d60a43d63a7e61cae6b06a984e67e92901cd4aa21d9909bc7dc6f8b9a2
+  sha256: 06f4dcc8e766aae3fb9a122c19a428190fbb0144681881760590fc17b43f9f30
   requires_dist:
   - ipython ; extra == 'dev'
   - ipywidgets<9,>=8.1.5 ; extra == 'dev'
@@ -5005,7 +5005,7 @@ packages:
 - kind: pypi
   name: transformers
   version: 4.47.0.dev0
-  url: git+https://github.com/huggingface/transformers.git@405b56269812056d9593869e22b7b264d806cb1e
+  url: git+https://github.com/huggingface/transformers.git@33868a057c02f0368ba63bd1edb746be38fe3d90
   requires_dist:
   - filelock
   - huggingface-hub<1.0,>=0.23.2

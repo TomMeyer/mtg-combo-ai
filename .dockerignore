@@ -1,0 +1,12 @@
+
+# Ignore project files
+__pycache__/
+.cache/
+.vscode/
+.pixi/
+.ruff_cache/
+
+# Ignore AI outputs
+outputs/
+results/
+logs/
