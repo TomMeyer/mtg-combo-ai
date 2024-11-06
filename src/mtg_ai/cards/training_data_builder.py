@@ -6,12 +6,10 @@ from functools import wraps
 from pathlib import Path
 from typing import Callable, Final, TypedDict
 
-from datasets import Dataset, DatasetDict
 from tqdm.auto import tqdm
 
 from mtg_ai.cards.database import MTGDatabase
 from mtg_ai.cards.edh_combos import EDHComboDatabase
-from mtg_ai.cards.utils import classproperty
 from mtg_ai.constants import PathLike
 from mtg_ai.utils import is_tqdm_disabled
 
@@ -62,7 +60,7 @@ class MTGDatasetBuilder:
     registered_functions: dict[str, list[Callable[[MTGDatabase], list[DataEntry]]]] = (
         defaultdict(list)
     )
-    group_order: dict[str, int] = {}
+    group_order: dict[str, int] = {"all": 1000}
 
     def __init__(self) -> None:
         raise NotImplementedError(
@@ -158,6 +156,7 @@ class MTGDatasetBuilder:
     ) -> None:
         start_time = time.time()
         directory = Path(directory)
+        directory.mkdir(parents=True, exist_ok=True)
         question_answer_file = directory.joinpath("all_question_answer.json")
         output_data = []
         entries: list[DataEntry] = []
@@ -194,104 +193,6 @@ def build_datasets(
         MTGDatasetBuilder.build_question_answer_datasets_single(directory=directory)
     else:
         MTGDatasetBuilder.build_question_answer_datasets(directory=directory)
-
-
-class MTGDatasetLoader:
-    _datasets: dict[str, tuple[Path, bool]] = {}
-    _directory: Path = QUESTION_ANSWER_FOLDER
-    """
-    MTGDatasetLoader is a class for loading Magic: The Gathering (MTG) datasets from a specified directory.
-
-    Attributes:
-        directory (Path): The directory containing the dataset files.
-        files (dict[str, tuple[Path, bool]]): A dictionary mapping dataset names to their file paths and a boolean indicating if they are Arrow datasets.
-
-    Methods:
-        __init__(directory: Path = QUESTION_ANSWER_FOLDER):
-            Initializes the MTGDatasetLoader with the specified directory and populates the files attribute with dataset files.
-
-        list_datasets() -> list[str]:
-            Returns a list of dataset names available in the directory.
-
-        load_dataset(name: str) -> datasets.Dataset:
-            Loads the specified dataset by name. Raises a ValueError if the dataset is not found.
-            If the dataset is an Arrow dataset, it is loaded from disk. Otherwise, it is loaded from a JSON file and saved to disk as an Arrow dataset.
-    """
-
-    def __init__(self):
-        raise NotImplementedError(
-            "MTGDatasetLoader is a static class and should not be instantiated."
-        )
-
-    @classproperty
-    def directory(cls) -> Path:
-        return cls._directory
-
-    @classproperty
-    def datasets(cls) -> dict[str, tuple[Path, bool]]:
-        if not cls._datasets:
-            cls._update_datasets()
-        return cls._datasets
-
-    @classmethod
-    def set_directory(cls, directory: Path):
-        cls._directory = directory
-        cls._update_datasets()
-
-    @classmethod
-    def _update_datasets(cls):
-        cls._datasets = {}
-        for file in QUESTION_ANSWER_FOLDER.glob("*.json"):
-            name = file.stem.replace("_question_answer", "")
-            cls._datasets[name] = (file, False)
-        for file in cls.directory.iterdir():
-            if file.is_dir() and file.stem in cls._datasets:
-                cls._datasets[file.stem] = (file, True)
-
-    @classproperty  # type: ignore
-    def dataset_names(cls) -> list[str]:
-        return list(cls.datasets.keys())
-
-    @classproperty  # type: ignore
-    def dataset_order(cls) -> list[str]:
-        return [
-            key
-            for key, _ in sorted(
-                MTGDatasetBuilder.group_order.items(), key=lambda x: x[1]
-            )
-        ]
-
-    @classmethod
-    def load_dataset(cls, name: str) -> Dataset:
-        """
-        Load a dataset by its name.
-
-        Args:
-            name (str): The name of the dataset to load.
-
-        Returns:
-            datasets.Dataset: The loaded dataset.
-
-        Raises:
-            ValueError: If the dataset name is not found in the available files.
-            TypeError: If the loaded dataset is a DatasetDict instead of a Dataset.
-        """
-        if name not in cls.datasets:
-            raise ValueError(f"Dataset {name} not found in {cls.datasets}")
-
-        file, is_arrow_dataset = cls.datasets[name]
-        if is_arrow_dataset:
-            dataset = Dataset.load_from_disk(str(file))
-            if isinstance(dataset, DatasetDict):
-                print(dataset)
-                raise TypeError("Dataset is a DatasetDict")
-            return dataset
-        else:
-            logger.info(f"loading {file} to HuggingFace dataset")
-            data = json.loads(file.read_text())
-            dataset = Dataset.from_dict(data)
-            dataset.save_to_disk(str(file.with_suffix("")))
-            return dataset
 
 
 @MTGDatasetBuilder.register(group="cards", train_order=0)
@@ -1097,6 +998,7 @@ def build_cards_to_combo_question_answer_dataset(database: MTGDatabase):
 
         question = f"How can you create a combo with {card_names_text}?"
         answer = (
+            "[START OF COMBO]"
             f"This combo can be formed with {card_names_text}\n\n"
             f"Color identity: {combo['combo']['identity']}\n"
             ""
@@ -1104,9 +1006,12 @@ def build_cards_to_combo_question_answer_dataset(database: MTGDatabase):
             ""
             "Steps:\n"
             f"{steps_text}"
+            "[END OF COMBO STEPS]"
             "\n\n"
             "Result:\n"
             f"{features_text}"
+            "[END OF COMBO RESULT]"
+            "[END OF COMBO]"
         )
 
         additional_prerequisites = []
@@ -1136,6 +1041,7 @@ def build_cards_to_combo_question_answer_dataset(database: MTGDatabase):
                 prerequisites.append(f"  - {prerequisite}")
 
         if prerequisites:
+            prerequisites.append("[END OF COMBO PREREQUISITES]")
             other_prerequisites_text = "\n".join(prerequisites)
             answer += f"\n\nOther prerequisites:\n{other_prerequisites_text}"
 

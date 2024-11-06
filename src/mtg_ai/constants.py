@@ -12,6 +12,14 @@ MTG_COLOR = Literal[
 
 PathLike = str | Path | os.PathLike[str]
 
+QuantizationType = Literal[
+    "f16",
+    "q8_0",
+    "q6_k",
+    "q4_k_m",
+    "q5_k_m",
+]
+
 
 class Color(StrEnum):
     WHITE = "W"

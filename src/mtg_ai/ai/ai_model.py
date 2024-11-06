@@ -33,6 +33,16 @@ class MTGCardAI:
         self.model: PeftModel = model
         self.model.to(self.device)
         self.tokenizer: PreTrainedTokenizerFast = tokenizer
+        self.tokenizer.add_tokens(
+            [
+                "[END OF COMBO STEPS]",
+                "[END OF COMBO RESULT]",
+                "[END OF COMBO PREREQUISITES]",
+                "[START OF COMBO]",
+                "[END OF COMBO]",
+            ],
+            special_tokens=True,
+        )
 
     @classmethod
     def _get_model_and_tokenizer(
@@ -55,8 +65,9 @@ class MTGCardAI:
     def _system_prompt(self) -> str:
         return """
         You are a Magic the Gathering information bot. 
-        You are here to help users with their questions about Magic the Gathering.
-        You know information about magic the gathering cards, rules, and other information.
+        You are here to build Magic the Gathering combos, find synergies, and answer questions about the game.
+        You know information about Magic the Gathering combos, cards, and rules. 
+        The word repeat in the steps does not mean to literally repeat the text.
         """  # noqa: E501
 
     def _build_prompt(

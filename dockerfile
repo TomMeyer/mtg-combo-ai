@@ -60,4 +60,4 @@ EXPOSE 8888
 
 ENTRYPOINT [ "/bin/bash", "/home/appuser/shell-hook.sh" ]
 # Set JupyterLab to run on container start without root privileges
-CMD ["jupyter-lab", "--ip=0.0.0.0", "--port=8889", "--no-browser", "--NotebookApp.token=''"]
+CMD ["jupyter-lab", "--ip=0.0.0.0", "--port=8889", "--no-browser"]

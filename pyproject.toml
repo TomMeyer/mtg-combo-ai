@@ -13,6 +13,9 @@ requires-python = ">=3.11,<3.12"
 dynamic = ["version"]
 dependencies = []
 
+[project.scripts]
+mtg-ai = "mtg_ai:_cli_main"
+
 [tool.pixi.project]
 channels = [ "nvidia", "pytorch", "conda-forge", "anaconda", "xformers"]
 platforms = ["linux-64"]
@@ -48,6 +51,8 @@ sentence-transformers = ">=3.2.0,<4"
 [tool.pixi.feature.dev.dependencies]
 colorlog = ">=6.8.2,<7"
 ipykernel = ">=6.29.5,<7"
+jupyter = ">=1.1.1,<2"
+rpds-py = ">=0.20.1,<0.21"
 
 [project.optional-dependencies]
 test = ["pytest"]

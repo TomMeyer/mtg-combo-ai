@@ -16,7 +16,9 @@ from unsloth import (
 )
 from unsloth.chat_templates import get_chat_template, train_on_responses_only
 
-from mtg_ai.cards.training_data_builder import QUESTION_ANSWER_FOLDER, MTGDatasetLoader
+from mtg_ai.cards import MTGDatasetLoader
+from mtg_ai.cards.training_data_builder import QUESTION_ANSWER_FOLDER
+from mtg_ai.constants import QuantizationType
 
 logger = getLogger(__name__)
 
@@ -100,6 +102,15 @@ class MTGCardAITrainer:
             self.load_model()
             if self._tokenizer is None:
                 raise RuntimeError("Tokenizer not loaded")
+            self.tokenizer.add_tokens(
+                [
+                    "[END OF COMBO STEPS]",
+                    "[END OF COMBO RESULT]",
+                    "[END OF COMBO PREREQUISITES]",
+                    "[START OF COMBO]",
+                    "[END OF COMBO]",
+                ]
+            )
         return self._tokenizer
 
     def load_model(self):
@@ -153,6 +164,7 @@ class MTGCardAITrainer:
         gradient_accumulation_steps: int = 1,
     ) -> SFTTrainer:
         logging_steps = len(self.data_loader.train_dataset) // (10 * train_batch_size)
+        logging_steps = max(logging_steps, 5)
         logger.info(f"setting logging steps to {logging_steps}")
 
         logger.info(f"Can use bfloat16: {is_bfloat16_supported()}")
@@ -248,11 +260,35 @@ class MTGCardAITrainer:
             logger.debug(self.tokenizer.decode(d))
 
         self.print_gpu_stats()
-        trainer.train(resume_from_checkpoint=resume_from_checkpoint)  # type: ignore
+
+        gpu_stats = torch.cuda.get_device_properties(0)
+        start_gpu_memory = round(
+            torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3
+        )
+        max_memory = round(gpu_stats.total_memory / 1024 / 1024 / 1024, 3)
+
+        trainer_stats = trainer.train(resume_from_checkpoint=resume_from_checkpoint)  # type: ignore
         logger.info("Saving model")
         self.model.save_pretrained(
             f"./results/{self.dataset_name}",
         )
+        trainer.save_model(f"./results/{self.dataset_name}-trainer")
+
+        used_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)
+        used_memory_for_lora = round(used_memory - start_gpu_memory, 3)
+        used_percentage = round(used_memory / max_memory * 100, 3)
+        lora_percentage = round(used_memory_for_lora / max_memory * 100, 3)
+        print(f"{trainer_stats.metrics['train_runtime']} seconds used for training.")
+        print(
+            f"{round(trainer_stats.metrics['train_runtime']/60, 2)} minutes used for training."
+        )
+        print(f"Peak reserved memory = {used_memory} GB.")
+        print(f"Peak reserved memory for training = {used_memory_for_lora} GB.")
+        print(f"Peak reserved memory % of max memory = {used_percentage} %.")
+        print(
+            f"Peak reserved memory for training % of max memory = {lora_percentage} %."
+        )
+
         logger.info("Model saved to ./results")
         logger.info("Training complete")
         logger.info("Model is now ready to be used for inference")
@@ -273,6 +309,14 @@ class MTGCardAITrainer:
         gc.collect()
         torch.cuda.empty_cache()
 
+    def save_model_gguf(self, quantization_type: QuantizationType = "q8_0"):
+        logger.info(f"Saving model to GGUF with quantization {quantization_type}")
+        self.model.save_pretrained_gguf(
+            f"./results/{self.dataset_name}-gguf-{quantization_type}",
+            self.tokenizer,
+            quantization_method=quantization_type,
+        )
+
 
 class MTGCardAITrainerPipeline:
     def __init__(
@@ -292,6 +336,7 @@ class MTGCardAITrainerPipeline:
     def train(
         self,
         dataset_name: str,
+        model_name: Optional[str] = None,
         resume_from_checkpoint: bool = False,
         learning_rate: float = 3e-5,
         weight_decay: float = 1e-6,
@@ -303,7 +348,9 @@ class MTGCardAITrainerPipeline:
             raise ValueError(
                 f"Dataset {dataset_name} is not a valid dataset name, must be one of {self.dataset_order}"
             )
-        model_name = self.dataset_name_to_model_name(dataset_name)
+        if not model_name:
+            model_name = self.dataset_name_to_model_name(dataset_name)
+
         logger.info(f"Training {dataset_name}")
         MTGCardAITrainer(dataset_name=dataset_name, model_name=model_name).train(
             resume_from_checkpoint=resume_from_checkpoint,
@@ -324,5 +371,14 @@ class MTGCardAITrainerPipeline:
     def train_all(self) -> None:
         logger.info("Starting training all datasets")
         for dataset_name in self.dataset_order:
+            if dataset_name == "all":
+                continue
             self.train(dataset_name)
         logger.info("Finished training all datasets")
+
+
+def convert_model_to_gguf(
+    model_name: str, quantization_type: QuantizationType = "q8_0"
+):
+    trainer = MTGCardAITrainer(dataset_name="", model_name=model_name)
+    trainer.save_model_gguf(quantization_type=quantization_type)
