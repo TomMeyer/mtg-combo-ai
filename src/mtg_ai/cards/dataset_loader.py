@@ -1,17 +1,17 @@
-import json
 import logging
 from pathlib import Path
 
-from datasets import Dataset, DatasetDict
+from datasets import Dataset, DatasetDict, load_dataset, load_from_disk
+from datasets.combine import concatenate_datasets
 
-from mtg_ai.cards.training_data_builder import QUESTION_ANSWER_FOLDER, MTGDatasetBuilder
+from mtg_ai.cards.training_data_builder import QUESTION_ANSWER_FOLDER
 from mtg_ai.cards.utils import classproperty
 
 logger = logging.getLogger(__name__)
 
 
 class MTGDatasetLoader:
-    _datasets: dict[str, tuple[Path, bool]] = {}
+    _datasets: dict[str, Path] = {}
     _directory: Path = QUESTION_ANSWER_FOLDER
     """
     MTGDatasetLoader is a class for loading Magic: The Gathering (MTG) datasets from a specified directory.
@@ -42,7 +42,7 @@ class MTGDatasetLoader:
         return cls._directory
 
     @classproperty  # type: ignore
-    def datasets(cls) -> dict[str, tuple[Path, bool]]:
+    def datasets(cls) -> dict[str, Path]:
         if not cls._datasets:
             cls._update_datasets()
         return cls._datasets
@@ -55,28 +55,30 @@ class MTGDatasetLoader:
     @classmethod
     def _update_datasets(cls):
         cls._datasets = {}
-        for file in QUESTION_ANSWER_FOLDER.glob("*.json"):
-            name = file.stem.replace("_question_answer", "")
-            cls._datasets[name] = (file, False)
         for file in cls.directory.iterdir():
-            if file.is_dir() and file.stem in cls._datasets:
-                cls._datasets[file.stem] = (file, True)
+            name = file.stem.replace("_question_answer", "")
+            cls._datasets[name] = file
 
     @classproperty  # type: ignore
     def dataset_names(cls) -> list[str]:
         return list(cls.datasets.keys())
 
-    @classproperty  # type: ignore
-    def dataset_order(cls) -> list[str]:
-        return [
-            key
-            for key, _ in sorted(
-                MTGDatasetBuilder.group_order.items(), key=lambda x: x[1]
-            )
-        ]
+    @classmethod
+    def load_dataset(cls, *name: str) -> Dataset:
+        if not name:
+            raise ValueError("No dataset name specified.")
+        elif len(name) == 1:
+            dataset = cls._load_dataset(name[0])
+            return dataset
+
+        datasets = []
+        for dataset_name in name:
+            dataset = cls._load_dataset(dataset_name)
+            datasets.append(dataset)
+        return concatenate_datasets(datasets)
 
     @classmethod
-    def load_dataset(cls, name: str) -> Dataset:
+    def _load_dataset(cls, name: str) -> Dataset:
         """
         Load a dataset by its name.
 
@@ -90,19 +92,14 @@ class MTGDatasetLoader:
             ValueError: If the dataset name is not found in the available files.
             TypeError: If the loaded dataset is a DatasetDict instead of a Dataset.
         """
-        if name not in cls.datasets:
-            raise ValueError(f"Dataset {name} not found in {cls.datasets}")
 
-        file, is_arrow_dataset = cls.datasets[name]
-        if is_arrow_dataset:
-            dataset = Dataset.load_from_disk(str(file))
-            if isinstance(dataset, DatasetDict):
-                print(dataset)
-                raise TypeError("Dataset is a DatasetDict")
-            return dataset
+        if name in cls.datasets:
+            file = cls.datasets[name]
+            dataset = load_from_disk(file)
         else:
-            logger.info(f"loading {file} to HuggingFace dataset")
-            data = json.loads(file.read_text())
-            dataset = Dataset.from_dict(data)
-            dataset.save_to_disk(str(file.with_suffix("")))
-            return dataset
+            dataset = load_dataset(name)
+        if isinstance(dataset, DatasetDict):
+            dataset = dataset["train"]
+        if not isinstance(dataset, Dataset):
+            raise TypeError(f"Loaded dataset is not a Dataset: {type(dataset)}")
+        return dataset

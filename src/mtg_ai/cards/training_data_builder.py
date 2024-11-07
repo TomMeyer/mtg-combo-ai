@@ -1,4 +1,3 @@
-import json
 import logging
 import time
 from collections import defaultdict
@@ -6,6 +5,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Callable, Final, TypedDict
 
+from datasets import Dataset
 from tqdm.auto import tqdm
 
 from mtg_ai.cards.database import MTGDatabase
@@ -60,7 +60,7 @@ class MTGDatasetBuilder:
     registered_functions: dict[str, list[Callable[[MTGDatabase], list[DataEntry]]]] = (
         defaultdict(list)
     )
-    group_order: dict[str, int] = {"all": 1000}
+    group_order: dict[str, int] = {}
 
     def __init__(self) -> None:
         raise NotImplementedError(
@@ -132,67 +132,69 @@ class MTGDatasetBuilder:
             desc="Building datasets",
         ):
             start_time = time.time()
-            question_answer_file = directory.joinpath(f"{group}_question_answer.json")
+            question_answer_file = directory.joinpath(f"{group}_question_answer")
 
             entries: list[DataEntry] = []
             for func in tqdm(builder_functions, desc=f"Running {group} builders"):
                 entries.extend(func(cls.database))
             output = {"conversations": [entry.to_json() for entry in entries]}
-            output_data = json.dumps(output, indent=2)
-
-            question_answer_file.write_text(output_data)
-
-            file_size = question_answer_file.stat().st_size / 1024 / 1024
-            logger.info(
-                (
-                    "Finished creating question answer dataset in "
-                    f"{time.time() - start_time} seconds | file size: {file_size:.2f} MB"
+            dataset = Dataset.from_dict(output)
+            dataset.save_to_disk(question_answer_file)
+            if dataset.size_in_bytes:
+                file_size = dataset.size_in_bytes / 1024 / 1024
+                logger.info(
+                    (
+                        "Finished creating question answer dataset in "
+                        f"{time.time() - start_time} seconds | file size: {file_size:.2f} MB"
+                    )
                 )
-            )
+            else:
+                logger.info(
+                    f"Finished creating question answer dataset in {time.time() - start_time} seconds"
+                )
 
-    @classmethod
-    def build_question_answer_datasets_single(
-        cls, directory: PathLike = QUESTION_ANSWER_FOLDER
-    ) -> None:
-        start_time = time.time()
-        directory = Path(directory)
-        directory.mkdir(parents=True, exist_ok=True)
-        question_answer_file = directory.joinpath("all_question_answer.json")
-        output_data = []
-        entries: list[DataEntry] = []
-        for group, builder_functions in tqdm(
-            cls.registered_functions.items(),
-            desc="Building datasets",
-        ):
-            start_time = time.time()
+    # @classmethod
+    # def build_question_answer_datasets_single(
+    #     cls, directory: PathLike = QUESTION_ANSWER_FOLDER
+    # ) -> None:
+    #     start_time = time.time()
+    #     directory = Path(directory)
+    #     directory.mkdir(parents=True, exist_ok=True)
+    #     question_answer_file = directory.joinpath("all_question_answer.json")
+    #     output_data = []
+    #     entries: list[DataEntry] = []
+    #     for group, builder_functions in tqdm(
+    #         cls.registered_functions.items(),
+    #         desc="Building datasets",
+    #     ):
+    #         start_time = time.time()
 
-            for func in tqdm(builder_functions, desc=f"Running {group} builders"):
-                entries.extend(func(cls.database))
+    #         for func in tqdm(builder_functions, desc=f"Running {group} builders"):
+    #             entries.extend(func(cls.database))
 
-        output = {"conversations": [entry.to_json() for entry in entries]}
-        output_data = json.dumps(output, indent=2)
+    #     output = {"conversations": [entry.to_json() for entry in entries]}
+    #     output_data = json.dumps(output, indent=2)
 
-        question_answer_file.write_text(output_data)
+    #     question_answer_file.write_text(output_data)
 
-        file_size = question_answer_file.stat().st_size / 1024 / 1024
-        logger.info(
-            (
-                "Finished creating question answer dataset in "
-                f"{time.time() - start_time} seconds | file size: {file_size:.2f} MB"
-            )
-        )
+    #     file_size = question_answer_file.stat().st_size / 1024 / 1024
+    #     logger.info(
+    #         (
+    #             "Finished creating question answer dataset in "
+    #             f"{time.time() - start_time} seconds | file size: {file_size:.2f} MB"
+    #         )
+    #     )
 
 
 def build_datasets(
-    directory: PathLike = QUESTION_ANSWER_FOLDER, all_merged: bool = False
+    directory: PathLike = QUESTION_ANSWER_FOLDER,  # all_merged: bool = False
 ) -> None:
     """
     Helper function to run the question-answer datasets for Magic: The Gathering (MTG) cards.
     """
-    if all_merged:
-        MTGDatasetBuilder.build_question_answer_datasets_single(directory=directory)
-    else:
-        MTGDatasetBuilder.build_question_answer_datasets(directory=directory)
+    # if all_merged:
+    # MTGDatasetBuilder.build_question_answer_datasets_single(directory=directory)
+    MTGDatasetBuilder.build_question_answer_datasets(directory=directory)
 
 
 @MTGDatasetBuilder.register(group="cards", train_order=0)
