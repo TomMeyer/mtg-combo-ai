@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     curl \
+    build-essential \
+    htop \
     && apt-get clean
 
 # Create a non-root user and switch to that user
@@ -56,7 +58,7 @@ USER appuser
 ENV PATH="/home/appuser/.pixi/bin:$PATH"
 
 # Expose the default JupyterLab port
-EXPOSE 8888
+EXPOSE 8889
 
 ENTRYPOINT [ "/bin/bash", "/home/appuser/shell-hook.sh" ]
 # Set JupyterLab to run on container start without root privileges
