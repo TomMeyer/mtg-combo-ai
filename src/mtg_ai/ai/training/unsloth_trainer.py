@@ -4,8 +4,14 @@ from multiprocessing import cpu_count
 
 import torch
 from peft.peft_model import PeftModel
-from transformers import DataCollatorForSeq2Seq, PreTrainedTokenizer, TrainingArguments
+from transformers import (
+    DataCollatorForSeq2Seq,
+    PreTrainedTokenizer,
+    PreTrainedTokenizerFast,
+    TrainingArguments,
+)
 from trl import SFTTrainer
+from unsloth import FastLanguageModel, is_bfloat16_supported
 from unsloth.chat_templates import get_chat_template, train_on_responses_only
 
 from mtg_ai.ai.training.base_trainer import BaseTrainer
@@ -14,14 +20,62 @@ logger = getLogger(__name__)
 
 
 class MTGCardAITrainerUnsloth(BaseTrainer):
+    """
+    Trainer class for MTGCard AI using Unsloth.
+
+    ### Attributes
+    Inherits all attributes from BaseTrainer.
+
+    ### Methods
+    - **_get_model_and_tokenizer**: Loads the model and tokenizer.
+    - **build_trainer**: Builds the SFTTrainer with specified parameters.
+    - **train**: Trains the model with specified parameters.
+
+    ### Example
+    ```python
+    trainer = MTGCardAITrainerUnsloth(
+        model_name="model_name",
+        datasets=[
+            "dataset1",
+            "dataset2",
+        ],
+        output_name="output_name",
+        max_seq_length=300,
+    )
+    trainer.train()
+    ```
+    """
+
     @classmethod
     def _get_model_and_tokenizer(
         cls, model_name: str, max_sequence_length: int = 500
-    ) -> tuple[PeftModel, PreTrainedTokenizer]:
-        # Unsloth import has side effects, import here to improve performance
-        from unsloth import (
-            FastLanguageModel,
+    ) -> tuple[PeftModel, PreTrainedTokenizer | PreTrainedTokenizerFast]:
+        """
+        Loads the model and tokenizer based on the provided model name and maximum sequence length.
+
+        ### Args
+        - **model_name** (str):
+            The name of the model to load.
+        - **max_sequence_length** (int, optional):
+            The maximum sequence length for the model. Defaults to `500`.
+
+        ### Returns
+        tuple[PeftModel, PreTrainedTokenizer | PreTrainedTokenizerFast]:
+            A tuple containing the loaded model and tokenizer.
+
+        ### Raises
+        - **RuntimeError**: If the model or tokenizer could not be loaded.
+
+        ### Example
+        ```python
+        model, tokenizer = (
+            MTGCardAITrainerUnsloth._get_model_and_tokenizer(
+                "model_name"
+            )
         )
+        ```
+        """
+        # Unsloth import has side effects, import here to improve performance
 
         logger.info(f"loading model and tokenizer {model_name}")
         model, tokenizer = FastLanguageModel.from_pretrained(
@@ -61,10 +115,34 @@ class MTGCardAITrainerUnsloth(BaseTrainer):
         eval_batch_size: int = 8,
         gradient_accumulation_steps: int = 1,
     ) -> SFTTrainer:
+        """
+        Builds the SFTTrainer with the specified training parameters.
+
+        ### Args
+        - **learning_rate** (float, optional):
+            The learning rate for training. Defaults to `3e-5`.
+        - **weight_decay** (float, optional):
+            The weight decay for training. Defaults to `1e-6`.
+        - **train_batch_size** (int, optional):
+            The batch size for training. Defaults to `16`.
+        - **eval_batch_size** (int, optional):
+            The batch size for evaluation. Defaults to `8`.
+        - **gradient_accumulation_steps** (int, optional):
+            The number of gradient accumulation steps. Defaults to `1`.
+
+        ### Returns
+        SFTTrainer:
+            The configured SFTTrainer instance.
+
+        ### Raises
+        None
+
+        ### Example
+        ```python
+        trainer = trainer_instance.build_trainer()
+        ```
+        """
         # Unsloth import has side effects, import here to improve performance
-        from unsloth import (
-            is_bfloat16_supported,
-        )
 
         logging_steps = len(self.data_loader.train_dataset) // (10 * train_batch_size)
         logging_steps = max(logging_steps, 5)
@@ -129,6 +207,34 @@ class MTGCardAITrainerUnsloth(BaseTrainer):
         eval_batch_size: int = 8,
         gradient_accumulation_steps: int = 1,
     ) -> None:
+        """
+        Trains the model with the specified parameters.
+
+        ### Args
+        - **resume_from_checkpoint** (bool, optional):
+            Whether to resume training from a checkpoint. Defaults to `False`.
+        - **learning_rate** (float, optional):
+            The learning rate for training. Defaults to `3e-5`.
+        - **weight_decay** (float, optional):
+            The weight decay for training. Defaults to `1e-6`.
+        - **train_batch_size** (int, optional):
+            The batch size for training. Defaults to `16`.
+        - **eval_batch_size** (int, optional):
+            The batch size for evaluation. Defaults to `8`.
+        - **gradient_accumulation_steps** (int, optional):
+            The number of gradient accumulation steps. Defaults to `1`.
+
+        ### Returns
+        None
+
+        ### Raises
+        - **ValueError**: If no training dataset is loaded.
+
+        ### Example
+        ```python
+        trainer_instance.train()
+        ```
+        """
         logger.info("Starting training")
 
         trainer = self.build_trainer(

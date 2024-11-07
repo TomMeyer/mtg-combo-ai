@@ -19,6 +19,23 @@ class MTGCardAITrainingDatasetLoader:
         datasets: str | list[str],
         num_procs: Optional[int] = None,
     ) -> None:
+        """
+        Initializes the MTGCardAITrainingDatasetLoader with the specified parameters.
+
+        ### Args
+        - **tokenizer** (PreTrainedTokenizer | PreTrainedTokenizerFast):
+            The tokenizer to be used for processing the dataset.
+        - **datasets** (str | list[str]):
+            The dataset or list of datasets to be loaded.
+        - **num_procs** (Optional[int], optional):
+            The number of processes to use for tokenization. Defaults to `None`.
+
+        ### Returns
+        None
+
+        ### Raises
+        - **ValueError**: If the datasets parameter is not a string or list of strings.
+        """
         self.tokenizer = tokenizer
         if isinstance(datasets, str):
             dataset: Dataset = MTGDatasetLoader.load_dataset(datasets)
@@ -44,12 +61,38 @@ class MTGCardAITrainingDatasetLoader:
 
     @property
     def train_dataset(self) -> Dataset:
+        """
+        Returns the training dataset.
+
+        ### Args
+        None
+
+        ### Returns
+        Dataset:
+        The training dataset.
+
+        ### Raises
+        - **ValueError**: If the dataset is not loaded.
+        """
         if not self.dataset:
             raise ValueError("Dataset not loaded")
         return self.dataset["train"]  # type: ignore
 
     @property
     def test_dataset(self) -> Dataset:
+        """
+        Returns the test dataset.
+
+        ### Args
+        None
+
+        ### Returns
+        Dataset:
+        The test dataset.
+
+        ### Raises
+        - **ValueError**: If the dataset is not loaded.
+        """
         if not self.dataset:
             raise ValueError("Dataset not loaded")
         return self.dataset["test"]  # type: ignore
