@@ -2,6 +2,7 @@ from mtg_ai.ai.ai_model import MTGCardAI
 from mtg_ai.ai.rag import MTGRAGSearchSystem
 from mtg_ai.ai.runner import MTGAIRunner
 from mtg_ai.ai.training import (
+    AutoTrainer,
     BaseTrainer,
     MTGCardAITrainerFSDP,
     MTGCardAITrainerUnsloth,
@@ -18,4 +19,5 @@ __all__ = [
     "MTGCardAI",
     "MTGRAGSearchSystem",
     "MTGAIRunner",
+    "AutoTrainer",
 ]
