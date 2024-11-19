@@ -7,6 +7,7 @@
 !src/
 !mtg_ai.ipynb
 !README.md
+!train.py
 
 # Ignore unnecessary files inside allowed directories
 # This should go after the allowed directories

@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     build-essential \
     htop \
+    vim \
     && apt-get clean
 
 # Create a non-root user and switch to that user
@@ -49,9 +50,10 @@ RUN useradd -m -s /bin/bash appuser && \
 
 # Set the working directory and copy the files from the build stage
 WORKDIR /home/appuser/mtg-ai
-COPY --chown=appuser:appuser --from=builder /home/appuser/mtg-ai .
-COPY --chown=appuser:appuser --from=builder /home/appuser/.pixi /home/appuser/.pixi
-COPY --chown=appuser:appuser --from=builder /home/appuser/shell-hook.sh /home/appuser/shell-hook.sh
+COPY --from=builder / /
+# COPY --chown=appuser:appuser --from=builder /home/appuser/mtg-ai .
+# COPY --chown=appuser:appuser --from=builder /home/appuser/.pixi /home/appuser/.pixi
+# COPY --chown=appuser:appuser --from=builder /home/appuser/shell-hook.sh /home/appuser/shell-hook.sh
 
 # Switch to the non-root user
 USER appuser
