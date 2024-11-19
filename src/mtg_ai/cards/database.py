@@ -1,7 +1,7 @@
 import logging
 import sqlite3
 from dataclasses import dataclass
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, Optional
 
 import pandas as pd
 import rapidfuzz
@@ -99,8 +99,7 @@ def _get_mtg_sqlite_file():
     mtgjson_download_url = "https://mtgjson.com/api/v5/AllPrintings.sqlite.gz"
     logger.info(f"Downloading MTGJSON sqlite file from {mtgjson_download_url}")
 
-    if not MTG_CACHE_DIR.exists():
-        MTG_CACHE_DIR.mkdir(parents=True)
+    MTG_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
     response = requests.get(mtgjson_download_url, stream=True)
     with gzip.GzipFile(fileobj=response.raw) as f_in:
@@ -149,8 +148,12 @@ def _build_filtered_sqlite():
 @dataclass
 class MTGDatabase:
     TABLE_NAME: ClassVar[str] = "filtered_cards"
+    _df: Optional[pd.DataFrame] = None
 
-    def __post_init__(self):
+    @property
+    def df(self) -> pd.DataFrame:
+        if self._df is not None:
+            return self._df
         if not MTG_FILTERED_SQLITE_FILE.exists():
             _build_filtered_sqlite()
         conn = sqlite3.connect(MTG_FILTERED_SQLITE_FILE)
@@ -211,7 +214,8 @@ class MTGDatabase:
         df["colorIdentity"] = df.colorIdentity.apply(sort_colors)
         df["colorIdentityName"] = df.colorIdentity.apply(color_to_identity)
         df = df.rename(columns={"manaValue": "cmc"})
-        self.df = df
+        self._df = df
+        return self._df
 
     def get_card_by_id(self, uuid: str) -> pd.Series:
         return self.df.loc[self.df["uuid"] == uuid].iloc[0]

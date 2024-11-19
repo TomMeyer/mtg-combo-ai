@@ -7,7 +7,6 @@ import torch
 from peft import PeftModel
 from transformers import BatchEncoding, TextIteratorStreamer
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
-from unsloth import FastLanguageModel
 
 from mtg_ai.cards import MTGDatabase
 
@@ -52,6 +51,8 @@ class MTGCardAI:
         max_sequence_length: int = 2048,
         load_in_4bit: bool = False,
     ):
+        from unsloth import FastLanguageModel
+
         model, tokenizer = FastLanguageModel.from_pretrained(
             model_name=model_name,  # YOUR MODEL YOU USED FOR TRAINING
             max_seq_length=max_sequence_length,

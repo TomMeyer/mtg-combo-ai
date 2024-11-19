@@ -8,11 +8,8 @@ from transformers import (
     DataCollatorForSeq2Seq,
     PreTrainedTokenizer,
     PreTrainedTokenizerFast,
-    TrainingArguments,
 )
-from trl import SFTTrainer
-from unsloth import FastLanguageModel, is_bfloat16_supported
-from unsloth.chat_templates import get_chat_template, train_on_responses_only
+from trl import SFTConfig, SFTTrainer
 
 from mtg_ai.ai.training.base_trainer import BaseTrainer
 
@@ -76,6 +73,7 @@ class MTGCardAITrainerUnsloth(BaseTrainer):
         ```
         """
         # Unsloth import has side effects, import here to improve performance
+        from unsloth import FastLanguageModel, get_chat_template
 
         logger.info(f"loading model and tokenizer {model_name}")
         model, tokenizer = FastLanguageModel.from_pretrained(
@@ -143,13 +141,14 @@ class MTGCardAITrainerUnsloth(BaseTrainer):
         ```
         """
         # Unsloth import has side effects, import here to improve performance
+        from unsloth import is_bfloat16_supported, train_on_responses_only
 
         logging_steps = len(self.data_loader.train_dataset) // (10 * train_batch_size)
         logging_steps = max(logging_steps, 5)
         logger.info(f"setting logging steps to {logging_steps}")
 
         logger.info(f"Can use bfloat16: {is_bfloat16_supported()}")
-        training_args = TrainingArguments(
+        training_args = SFTConfig(
             per_device_train_batch_size=train_batch_size,
             per_device_eval_batch_size=eval_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
@@ -173,6 +172,8 @@ class MTGCardAITrainerUnsloth(BaseTrainer):
             include_tokens_per_second=True,
             do_eval=True,
             dataloader_num_workers=12,
+            max_seq_length=self.max_seq_length,
+            dataset_text_field="text",
         )
 
         model = self.model
@@ -184,8 +185,6 @@ class MTGCardAITrainerUnsloth(BaseTrainer):
             tokenizer=tokenizer,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
-            dataset_text_field="text",
-            max_seq_length=self.max_seq_length,
             data_collator=DataCollatorForSeq2Seq(tokenizer=tokenizer),
             dataset_num_proc=cpu_count() - 1,
             packing=False,

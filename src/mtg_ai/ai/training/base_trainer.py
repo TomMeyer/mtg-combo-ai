@@ -1,15 +1,18 @@
 import gc
 from logging import getLogger
-from typing import Optional
+from typing import Optional, TypeVar
 
 import torch
-from peft.peft_model import PeftModel
+from peft import PeftMixedModel, PeftModel
 from transformers import PreTrainedTokenizer, PreTrainedTokenizerFast
 from transformers.trainer import Trainer
 
 from mtg_ai.ai.training.dataset_loader import MTGCardAITrainingDatasetLoader
 
 logger = getLogger(__name__)
+
+
+ModelT = TypeVar("ModelT", bound=torch.nn.Module)
 
 
 class BaseTrainer:
@@ -104,7 +107,9 @@ class BaseTrainer:
     @classmethod
     def _get_model_and_tokenizer(
         cls, model_name: str, max_sequence_length: int = 500
-    ) -> tuple[PeftModel, PreTrainedTokenizer | PreTrainedTokenizerFast]:
+    ) -> tuple[
+        PeftModel | PeftMixedModel, PreTrainedTokenizer | PreTrainedTokenizerFast
+    ]:
         """
         Loads the model and tokenizer based on the provided model name and maximum sequence length.
 
@@ -166,6 +171,7 @@ class BaseTrainer:
                     "[END OF COMBO]",
                 ]
             )
+            self.tokenizer.padding_side = "right"
         return self._tokenizer
 
     @property

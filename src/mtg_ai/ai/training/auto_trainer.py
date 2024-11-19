@@ -1,7 +1,11 @@
+import logging
+
 import torch
 
 from mtg_ai.ai.training.fsdp_trainer import MTGCardAITrainerFSDP
 from mtg_ai.ai.training.unsloth_trainer import MTGCardAITrainerUnsloth
+
+logger = logging.getLogger(__name__)
 
 
 class AutoTrainer:
@@ -13,7 +17,9 @@ class AutoTrainer:
         max_seq_length: int = 500,
     ) -> None:
         self.gpu_count = torch.cuda.device_count()
+        logger.info(f"Detected {self.gpu_count} GPUs")
         if self.gpu_count > 1:
+            logger.info("Using FSDP Trainer")
             self._trainer = MTGCardAITrainerFSDP(
                 model_name=model_name,
                 datasets=datasets,
@@ -21,6 +27,7 @@ class AutoTrainer:
                 max_seq_length=max_seq_length,
             )
         else:
+            logger.info("Using UnSloth Trainer")
             self._trainer = MTGCardAITrainerUnsloth(
                 model_name=model_name,
                 datasets=datasets,

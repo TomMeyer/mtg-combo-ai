@@ -55,6 +55,8 @@ class MTGDatasetLoader:
     @classmethod
     def _update_datasets(cls):
         cls._datasets = {}
+        if not cls.directory.exists():
+            return
         for file in cls.directory.iterdir():
             name = file.stem.replace("_question_answer", "")
             cls._datasets[name] = file

@@ -2,6 +2,7 @@ from logging import getLogger
 from multiprocessing import cpu_count
 from typing import Any, Optional, TypeVar
 
+from accelerate import Accelerator
 from datasets import Dataset, DatasetDict
 from transformers.trainer import Trainer
 
@@ -18,6 +19,7 @@ class MTGCardAITrainingDatasetLoader:
         tokenizer,
         datasets: str | list[str],
         num_procs: Optional[int] = None,
+        accelerator: Optional[Accelerator] = None,
     ) -> None:
         """
         Initializes the MTGCardAITrainingDatasetLoader with the specified parameters.
@@ -36,6 +38,7 @@ class MTGCardAITrainingDatasetLoader:
         ### Raises
         - **ValueError**: If the datasets parameter is not a string or list of strings.
         """
+        self.accelerator = accelerator
         self.tokenizer = tokenizer
         if isinstance(datasets, str):
             dataset: Dataset = MTGDatasetLoader.load_dataset(datasets)
@@ -52,9 +55,18 @@ class MTGCardAITrainingDatasetLoader:
             )
             return {"text": texts}
 
-        num_procs = min(num_procs or cpu_count() - 1, 12)
+        if not num_procs:
+            num_procs = max(1, cpu_count() - 1)
         logger.info(f"Tokenizing dataset with {num_procs} processes")
-        formatted_dataset = dataset.map(format_prompt, num_proc=num_procs, batched=True)  # type: ignore
+        if self.accelerator:
+            with self.accelerator.main_process_first():
+                formatted_dataset = dataset.map(
+                    format_prompt, num_proc=num_procs, batched=True
+                )
+        else:
+            formatted_dataset = dataset.map(
+                format_prompt, num_proc=num_procs, batched=True
+            )
         logger.info("finished tokenizing dataset")
 
         self.dataset: DatasetDict = formatted_dataset.train_test_split(test_size=0.2)

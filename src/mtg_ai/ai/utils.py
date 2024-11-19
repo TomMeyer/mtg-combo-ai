@@ -68,6 +68,11 @@ class ModelAndTokenizer(Enum):
         "unsloth/Meta-Llama-3.1-70B-Instruct",
         None,
     )
+    UNSLOTH_LLAMA_3_1_NEMOTRON_70B_INSTRUCT = (
+        "unsloth/Llama-3.1-Nemotron-70B-Instruct",
+        "unsloth/Llama-3.1-Nemotron-70B-Instruct",
+        None,
+    )
 
     def __init__(
         self,
