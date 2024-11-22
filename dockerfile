@@ -49,8 +49,9 @@ RUN useradd -m -s /bin/bash appuser && \
     chown -R appuser:appuser /home/appuser
 
 # Set the working directory and copy the files from the build stage
-WORKDIR /home/appuser/mtg-ai
 COPY --from=builder / /
+
+WORKDIR /home/appuser/mtg-ai
 # COPY --chown=appuser:appuser --from=builder /home/appuser/mtg-ai .
 # COPY --chown=appuser:appuser --from=builder /home/appuser/.pixi /home/appuser/.pixi
 # COPY --chown=appuser:appuser --from=builder /home/appuser/shell-hook.sh /home/appuser/shell-hook.sh
@@ -64,4 +65,4 @@ EXPOSE 8889
 
 ENTRYPOINT [ "/bin/bash", "/home/appuser/shell-hook.sh" ]
 # Set JupyterLab to run on container start without root privileges
-CMD ["jupyter-lab", "--ip=0.0.0.0", "--port=8889", "--no-browser"]
+CMD ["pixi", "run", "jupyter-lab"]
