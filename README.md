@@ -61,6 +61,17 @@ runner.run(
 
 ```
 
+# Running on GPU provider services
+
+### Vast.ai
+
+```bash
+# on-start command 
+
+sudo -u appuser -H  bash -c "source /home/appuser/shell-hook.sh && cd /home/appuser/mtg-ai && /home/appuser/.pixi/bin/pixi run jupyter-lab &" appuser
+```
+
+
 # Acknowledgements
 
 Card data is from [MTGJSON](https://mtgjson.com/)
