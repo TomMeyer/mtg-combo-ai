@@ -4,7 +4,7 @@ from typing import Any, Optional, TypeVar
 
 from accelerate import Accelerator
 from datasets import Dataset, DatasetDict
-from transformers.trainer import Trainer
+from transformers import PreTrainedTokenizer, PreTrainedTokenizerFast, Trainer
 
 from mtg_ai.cards import MTGDatasetLoader
 
@@ -16,7 +16,7 @@ TrainerT = TypeVar("TrainerT", bound=Trainer)
 class MTGCardAITrainingDatasetLoader:
     def __init__(
         self,
-        tokenizer,
+        tokenizer: PreTrainedTokenizer | PreTrainedTokenizerFast,
         datasets: str | list[str],
         num_procs: Optional[int] = None,
         accelerator: Optional[Accelerator] = None,
@@ -46,14 +46,26 @@ class MTGCardAITrainingDatasetLoader:
             dataset = MTGDatasetLoader.load_dataset(*datasets)
         else:
             raise ValueError("datasets must be a string or list of strings")
+        logger.info(f"chat template: {self.tokenizer.get_chat_template()}")
+        # def format_prompt(examples) -> dict[str, Any]:
+        #     texts = self.tokenizer.apply_chat_template(
+        #         conversation=examples["conversations"],
+        #         tokenize=False,
+        #         add_generation_prompt=False,
+        #     )
+        #     return {"text": texts}
 
         def format_prompt(examples) -> dict[str, Any]:
             texts = self.tokenizer.apply_chat_template(
                 conversation=examples["conversations"],
-                tokenize=False,
+                tokenize=True,
                 add_generation_prompt=False,
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
             )
-            return {"text": texts}
+            # self.tokenizer.convert_tokens_to_ids(texts)
+            return {"texts": texts}
 
         if not num_procs:
             num_procs = max(1, cpu_count() - 1)

@@ -19,7 +19,7 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
-from trl import DataCollatorForCompletionOnlyLM
+from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 
 from mtg_ai.ai.training.base_trainer import BaseTrainer
 
@@ -75,6 +75,9 @@ class MTGCardAITrainerFSDP(BaseTrainer):
             auto_wrap_policy="transformer_based_wrap",
             forward_prefetch=False,
         )
+        torch.distributed.init_process_group(
+            backend="nccl", timeout=datetime.timedelta(seconds=5400)
+        )
         self.accelerator = Accelerator(
             mixed_precision="bf16",
             fsdp_plugin=self.fsdp_plugin,
@@ -105,6 +108,7 @@ class MTGCardAITrainerFSDP(BaseTrainer):
         )
         bits_and_bytes_config = BitsAndBytesConfig(
             load_in_4bit=True,
+            bnb_4bit_use_double_quant=True,
             bnb_4bit_quant_type="nf4",
             bnb_4bit_compute_dtype=torch.bfloat16,
             bnb_4bit_quant_storage=torch.bfloat16,
@@ -113,10 +117,10 @@ class MTGCardAITrainerFSDP(BaseTrainer):
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
             quantization_config=bits_and_bytes_config,
-            low_cpu_mem_usage=True,
             device_map={"": torch.cuda.current_device()},
             torch_dtype=torch.bfloat16,
-            # attn_implementation="flash_attention_2",
+            use_cache=True,
+            attn_implementation="flash_attention_2",
         )
         if model is None:
             raise ValueError("Model not found")
@@ -135,7 +139,7 @@ class MTGCardAITrainerFSDP(BaseTrainer):
             ],
             lora_dropout=0,
             bias="none",
-            use_dora=True,
+            use_dora=False,
         )
         model = get_peft_model(
             model,
@@ -189,7 +193,6 @@ class MTGCardAITrainerFSDP(BaseTrainer):
             # auto_find_batch_size=True,
             # accelerator_config="/home/appuser/.cache/huggingface/accelerate/default_config.yaml",
         )
-
         model = self.model
         tokenizer = self.data_loader.tokenizer
         train_dataset = self.data_loader.train_dataset
@@ -200,25 +203,25 @@ class MTGCardAITrainerFSDP(BaseTrainer):
             tokenizer=tokenizer,
         )
 
-        # trainer: SFTTrainer = SFTTrainer(
-        #     model=model,
-        #     tokenizer=tokenizer,
-        #     train_dataset=train_dataset,
-        #     eval_dataset=eval_dataset,
-        #     dataset_text_field="text",
-        #     max_seq_length=self.max_seq_length,
-        #     data_collator=data_collator,
-        #     packing=False,
-        #     args=training_args,
-        # )
-
-        trainer: Trainer = Trainer(
+        trainer: SFTTrainer = SFTTrainer(
             model=model,
-            args=training_args,
+            tokenizer=tokenizer,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
+            dataset_text_field="text",
+            max_seq_length=self.max_seq_length,
             data_collator=data_collator,
+            packing=False,
+            args=training_args,
         )
+
+        # trainer: Trainer = Trainer(
+        #     model=model,
+        #     args=training_args,
+        #     train_dataset=train_dataset,
+        #     eval_dataset=eval_dataset,
+        #     data_collator=data_collator,
+        # )
         return trainer
 
     def print_parameter_device(self) -> None:

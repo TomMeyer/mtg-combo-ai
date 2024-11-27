@@ -143,7 +143,9 @@ class MTGCardAITrainerUnsloth(BaseTrainer):
         # Unsloth import has side effects, import here to improve performance
         from unsloth import is_bfloat16_supported, train_on_responses_only
 
-        logging_steps = len(self.data_loader.train_dataset) // (10 * train_batch_size)
+        logging_steps = self.data_loader.train_dataset.num_rows // (
+            10 * train_batch_size
+        )
         logging_steps = max(logging_steps, 5)
         logger.info(f"setting logging steps to {logging_steps}")
 
