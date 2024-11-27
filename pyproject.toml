@@ -9,7 +9,7 @@ path = "src/mtg_ai/__init__.py"
 name = "mtg-ai"
 description = "Magic the Gathering general information and combo llama-based LLM"
 authors = [{name = "Thomas Meyer", email = "thomas@thomasmeyer.co" }]
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.11,<3.13"
 dynamic = ["version"]
 
 [project.scripts]
@@ -34,41 +34,38 @@ test = { features = ["test"], solve-group = "default" }
 dev = { features = ["dev", "test"], solve-group = "default" }
 
 [tool.pixi.dependencies]
-pytorch = "2.4.1"
-pytorch-cuda = { version="12.1", channel = "pytorch" }
-xformers = "*"
-haystack-ai = "*"
+haystack-ai = "~=2.7.0"
 
 [tool.pixi.pypi-dependencies]
 mtg-ai = { path = ".", editable = true }
-unsloth = ">=2024.8"
-datasets = ">=2.14.4"
-transformers = ">=4.46.3"
-accelerate = ">=1.1.1"
-peft = ">=0.13.2"
-trl = ">=0.11.4"
-bitsandbytes = ">=0.44.1"
-rapidfuzz = ">=3.10.1"
-sentence-transformers = ">=3.3.1"
-
-[tool.pixi.feature.dev.dependencies]
-colorlog = ">=6.9.0"
-ipykernel = ">=6.29.5"
-jupyter = ">=1.1.1"
-rpds-py = ">=0.20.1"
+torch = "~=2.5.1"
+tensorboard = "~=2.18.0"
+torch-tb-profiler = "~=0.4.3"
+unsloth = "~=2024.11.11"
+transformers = "~=4.46.3"
+datasets = "~=3.1.0"
+accelerate = "~=1.1.1"
+evaluate = "~=0.4.3"
+bitsandbytes = "~=0.44.1"
+huggingface_hub = "~=0.26.2"
+trl = "~=0.12.1"
+peft = "~=0.13.2"
+sentence-transformers = "~=3.3.1"
+rapidfuzz = "~=3.3.1"
 
 [tool.pixi.feature.dev.pypi-dependencies]
-ruff  = ">=0.7.4"
-jupyterlab = ">=4.2.6"
-ipython = ">=8.29.0"
-pixi-kernel = ">=0.5.1"
-ipywidgets = ">=8.1.5"
-tensorboard = ">=2.18.0"
-torch-tb-profiler = ">=0.4.3"
+colorlog = "~=6.9.0"
+ipykernel = "~=6.29.5"
+jupyter = "~=1.1.1"
+rpds-py = "~=0.21.0"
+ruff  = "~=0.8.0"
+jupyterlab = "~=4.2.6"
+ipython = "~=8.29.0"
+pixi-kernel = "~=0.5.1"
+ipywidgets = "~=8.1.5"
 
-[project.optional-dependencies]
-test = ["pytest"]
-# dev = ["ruff", "jupyterlab", "ipython", "pixi-kernel", "ipywidgets>=8.1.5,<9", "tensorboard>=2.18.0,<3", "torch-tb-profiler>=0.4.3,<0.5"]
+[tool.pixi.feature.test.pypi-dependencies]
+pytest = "~=8.3.3"
 
 # Extra tool configs
 
