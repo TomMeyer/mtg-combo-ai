@@ -17,9 +17,8 @@ from transformers import (
     PreTrainedTokenizer,
     PreTrainedTokenizerFast,
     Trainer,
-    TrainingArguments,
 )
-from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
+from trl import DataCollatorForCompletionOnlyLM, SFTConfig, SFTTrainer
 
 from mtg_ai.ai.training.base_trainer import BaseTrainer
 
@@ -167,7 +166,7 @@ class MTGCardAITrainerFSDP(BaseTrainer):
             logger.info(
                 f"setting gradient_accumulation_steps to {gradient_accumulation_steps}"
             )
-        training_args = TrainingArguments(
+        training_args = SFTConfig(
             per_device_train_batch_size=train_batch_size,
             per_device_eval_batch_size=eval_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
@@ -188,10 +187,7 @@ class MTGCardAITrainerFSDP(BaseTrainer):
             overwrite_output_dir=True,
             include_tokens_per_second=True,
             dataloader_num_workers=12,
-            # fsdp=[FSDPOption.],
             # gradient_checkpointing=True,
-            # auto_find_batch_size=True,
-            # accelerator_config="/home/appuser/.cache/huggingface/accelerate/default_config.yaml",
         )
         model = self.model
         tokenizer = self.data_loader.tokenizer
@@ -205,7 +201,7 @@ class MTGCardAITrainerFSDP(BaseTrainer):
 
         trainer: SFTTrainer = SFTTrainer(
             model=model,
-            tokenizer=tokenizer,
+            processing_class=tokenizer,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             dataset_text_field="text",
