@@ -33,8 +33,12 @@ default = { solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
 dev = { features = ["dev", "test"], solve-group = "default" }
 
+[tool.pixi.pypi-options]
+no-build-isolation = ["flash-attn"]
+
 [tool.pixi.dependencies]
 haystack-ai = "~=2.7.0"
+cuda-toolkit = "=12.4"
 
 [tool.pixi.pypi-dependencies]
 mtg-ai = { path = ".", editable = true }
@@ -51,7 +55,9 @@ huggingface_hub = "~=0.26.2"
 trl = "~=0.12.1"
 peft = "~=0.13.2"
 sentence-transformers = "~=3.3.1"
+flash-attn = ">=2.7.0post2"
 rapidfuzz = "~=3.3.1"
+rich = ">=13.9.4"
 
 [tool.pixi.feature.dev.pypi-dependencies]
 colorlog = "~=6.9.0"
