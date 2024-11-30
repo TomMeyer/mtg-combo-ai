@@ -1,5 +1,4 @@
 from logging import getLogger
-from multiprocessing import cpu_count
 from typing import Any, Optional, TypeVar
 
 from accelerate import Accelerator
@@ -47,13 +46,6 @@ class MTGCardAITrainingDatasetLoader:
         else:
             raise ValueError("datasets must be a string or list of strings")
         logger.info(f"chat template: {self.tokenizer.get_chat_template()}")
-        # def format_prompt(examples) -> dict[str, Any]:
-        #     texts = self.tokenizer.apply_chat_template(
-        #         conversation=examples["conversations"],
-        #         tokenize=False,
-        #         add_generation_prompt=False,
-        #     )
-        #     return {"text": texts}
 
         def format_prompt(examples) -> dict[str, Any]:
             texts = self.tokenizer.apply_chat_template(
@@ -64,21 +56,10 @@ class MTGCardAITrainingDatasetLoader:
                 padding=True,
                 truncation=True,
             )
-            # self.tokenizer.convert_tokens_to_ids(texts)
             return {"texts": texts}
 
-        if not num_procs:
-            num_procs = max(1, cpu_count() - 1)
         logger.info(f"Tokenizing dataset with {num_procs} processes")
-        if self.accelerator:
-            with self.accelerator.main_process_first():
-                formatted_dataset = dataset.map(
-                    format_prompt, num_proc=num_procs, batched=True
-                )
-        else:
-            formatted_dataset = dataset.map(
-                format_prompt, num_proc=num_procs, batched=True
-            )
+        formatted_dataset = dataset.map(format_prompt, batched=True)
         logger.info("finished tokenizing dataset")
 
         self.dataset: DatasetDict = formatted_dataset.train_test_split(test_size=0.2)

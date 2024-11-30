@@ -29,6 +29,18 @@ pixi shell -e dev
 ```
 
 To train the model
+
+```bash
+# options can be set in the yaml file or passed as arguments
+# --help to list all options
+
+# for multi-gpu training
+accelerate launch train.py --config ./llama_3_1_nemotron_70B_instruct_fsdp_qlora.yaml
+
+# for single gpu training
+accelerate launch train.py --config ./llama_3_2_3B_instruct_unsloth.yaml
+```
+
 ```python
 from mtg_ai.ai import ModelAndTokenizer, MTGCardAITrainer
 model = ModelAndTokenizer.UNSLOTH_LLAMA_3_2_3B_INSTRUCT_Q8
@@ -50,27 +62,16 @@ ai_model_name: str = "./results"
 rag_embedding_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
 
 runner = MTGAIRunner(
-    ai_model_name=ai_model_name, rag_embedding_model_name=rag_embedding_model_name
+    ai_model_name=ai_model_name,
+    rag_embedding_model_name=rag_embedding_model_name
 )
 
 runner.run(
     "What is the converted mana cost of Acquisitions Expert?"
     max_new_tokens=100, 
-    filters=None, top_k=3
+    top_k=3
 )
-
 ```
-
-# Running on GPU provider services
-
-### Vast.ai
-
-```bash
-# on-start command 
-
-sudo -u appuser -H  bash -c "source /home/appuser/shell-hook.sh && cd /home/appuser/mtg-ai && /home/appuser/.pixi/bin/pixi run jupyter-lab &" appuser
-```
-
 
 # Acknowledgements
 

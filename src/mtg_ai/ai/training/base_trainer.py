@@ -6,7 +6,9 @@ import torch
 from peft import PeftMixedModel, PeftModel
 from transformers import PreTrainedTokenizer, PreTrainedTokenizerFast
 from transformers.trainer import Trainer
+from trl import SFTConfig
 
+from mtg_ai.ai.training.config import MTGAITrainingConfig
 from mtg_ai.ai.training.dataset_loader import MTGCardAITrainingDatasetLoader
 
 logger = getLogger(__name__)
@@ -68,10 +70,8 @@ class BaseTrainer:
 
     def __init__(
         self,
-        model_name: str,
-        datasets: list[str],
-        output_name: str,
-        max_seq_length: int = 300,
+        training_config: MTGAITrainingConfig,
+        sft_config: SFTConfig,
     ) -> None:
         """
         Initializes the BaseTrainer with the specified parameters.
@@ -93,15 +93,14 @@ class BaseTrainer:
         None
         """
         # set properties
-        self.output_name = output_name
-        self._model: Optional[PeftModel] = None
+        self.sft_config = sft_config
+        if not training_config:
+            training_config = MTGAITrainingConfig()
+        self.training_config = training_config
+        self._model: Optional[PeftModel | PeftMixedModel] = None
         self._tokenizer: Optional[PreTrainedTokenizer | PreTrainedTokenizerFast] = None
-        self.tokenizer_name = model_name
-        self.max_seq_length = max_seq_length
-        self.model_name = model_name
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self._data_loader = None
-        self.datasets = datasets
         self.load_model()
 
     @classmethod
@@ -129,7 +128,7 @@ class BaseTrainer:
         raise NotImplementedError("Must be implemented in subclass")
 
     @property
-    def model(self) -> PeftModel:
+    def model(self) -> PeftModel | PeftMixedModel:
         """
         Returns the model instance.
 
@@ -188,7 +187,9 @@ class BaseTrainer:
         """
         if not self._data_loader:
             self._data_loader = MTGCardAITrainingDatasetLoader(
-                tokenizer=self.tokenizer, datasets=self.datasets
+                tokenizer=self.tokenizer,
+                datasets=self.training_config.datasets,
+                num_procs=self.sft_config.dataset_num_proc,
             )
         return self._data_loader
 
@@ -205,20 +206,20 @@ class BaseTrainer:
         ### Raises
         None
         """
-        logger.info(f"loading model {self.model_name}")
+        logger.info(f"loading model {self.training_config.model_id}")
+        if self.sft_config:
+            max_seq_length = self.sft_config.max_seq_length or 1000
+        else:
+            max_seq_length = 1000
         model, tokenizer = self._get_model_and_tokenizer(
-            self.model_name, self.max_seq_length
+            self.training_config.model_id, max_sequence_length=max_seq_length
         )
+        tokenizer.padding_side = "right"
         self._model = model
         self._tokenizer = tokenizer
 
     def build_trainer(
         self,
-        learning_rate: float = 3e-5,
-        weight_decay: float = 1e-6,
-        train_batch_size: int = 16,
-        eval_batch_size: int = 8,
-        gradient_accumulation_steps: int = 1,
         # trainer_args: dict[str, Any], # TODO: allow for specific args to be passed in
     ) -> Trainer:
         """
@@ -246,12 +247,6 @@ class BaseTrainer:
 
     def train(
         self,
-        resume_from_checkpoint: bool = False,
-        learning_rate: float = 3e-5,
-        weight_decay: float = 1e-6,
-        train_batch_size: int = 16,
-        eval_batch_size: int = 8,
-        gradient_accumulation_steps: int = 1,
     ) -> None:
         """
         Train the model with the specified parameters.
