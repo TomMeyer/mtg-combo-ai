@@ -23,7 +23,7 @@ platforms = ["linux-64"]
 lint = "pre-commit run --all-files"
 test = "pytest"
 docker-build = "docker build --progress=plain -t mtg-ai:latest ."
-docker-run = "docker run --gpus all -p 8889:8889 mtg-ai:latest"
+docker-run = "docker run --gpus all -p 8888:8888 -p 8889:8889 mtg-ai:latest"
 
 [tool.pixi.feature.dev.tasks]
 jupyter-lab = "jupyter-lab --ip=0.0.0.0 --port=8889 --no-browser"
@@ -42,9 +42,7 @@ haystack-ai = "~=2.7.0"
 
 [tool.pixi.pypi-dependencies]
 mtg-ai = { path = ".", editable = true }
-packaging = "*"
 unsloth = "~=2024.11.11"
-setuptools = "*"
 torch = "~=2.5.1"
 tensorboard = "~=2.18.0"
 torch-tb-profiler = "~=0.4.3"
