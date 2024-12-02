@@ -1,7 +1,7 @@
 ####################################################
 # Stage 1: Build environment with all dependencies 
 ####################################################
-FROM continuumio/miniconda3 AS builder
+FROM ubuntu:24.04 AS builder
 
 # Install essential packages
 RUN apt-get update && apt-get install -y \
@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     htop \
     vim \
+    ninja-build \
+    cmake \ 
     && apt-get clean
 
 # Create a non-root user and switch to that user
@@ -31,7 +33,7 @@ RUN curl -fsSL https://pixi.sh/install.sh | bash
 ENV PATH="/home/appuser/.pixi/bin:$PATH"
 
 # Install the project dependencies
-RUN pixi install -vv --all
+RUN pixi install --all -vv
 
 # Create the shell-hook bash script to activate the environment
 RUN pixi shell-hook -e dev > /home/appuser/shell-hook.sh
@@ -42,7 +44,7 @@ RUN echo 'exec "$@"' >> /home/appuser/shell-hook.sh
 #######################################################
 # STAGE 2: Runtime environment with only the essentials
 #######################################################
-FROM continuumio/miniconda3 AS runtime
+FROM ubuntu:24.04 AS runtime
 
 # Create the same non-root user and necessary directories
 RUN useradd -m -s /bin/bash appuser && \

@@ -37,15 +37,17 @@ dev = { features = ["dev", "test"], solve-group = "default" }
 no-build-isolation = ["flash-attn"]
 
 [tool.pixi.dependencies]
+cuda-toolkit = "=12.3"
 haystack-ai = "~=2.7.0"
-cuda-toolkit = "=12.4"
 
 [tool.pixi.pypi-dependencies]
 mtg-ai = { path = ".", editable = true }
+packaging = "*"
+unsloth = "~=2024.11.11"
+setuptools = "*"
 torch = "~=2.5.1"
 tensorboard = "~=2.18.0"
 torch-tb-profiler = "~=0.4.3"
-unsloth = "~=2024.11.11"
 transformers = "~=4.46.3"
 datasets = "~=3.1.0"
 accelerate = "~=1.1.1"
@@ -55,9 +57,9 @@ huggingface_hub = "~=0.26.2"
 trl = "~=0.12.1"
 peft = "~=0.13.2"
 sentence-transformers = "~=3.3.1"
-flash-attn = ">=2.7.0post2"
 rapidfuzz = "~=3.3.1"
 rich = ">=13.9.4"
+flash-attn = { url = "https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.0.post2/flash_attn-2.7.0.post2+cu12torch2.5cxx11abiTRUE-cp312-cp312-linux_x86_64.whl" }
 
 [tool.pixi.feature.dev.pypi-dependencies]
 colorlog = "~=6.9.0"

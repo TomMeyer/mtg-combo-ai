@@ -8,6 +8,8 @@
 !mtg_ai.ipynb
 !README.md
 !train.py
+!llama_3_1_nemotron_70B_instruct_fsdp_qlora.yaml
+!llama_3_2_3B_instruct_unsloth.yaml
 
 # Ignore unnecessary files inside allowed directories
 # This should go after the allowed directories
