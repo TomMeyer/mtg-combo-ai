@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  text-generation-inference:
+    image: ghcr.io/huggingface/text-generation-inference:latest
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: '1gb'
+    ports:
+      - "8080:80"
+    environment:
+      - MODEL_ID=${model}
+      - LORA_ADAPTERS=${adapter}
+      - QUANTIZE=bitsandbytes-nf4
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - text-generation-inference
+
+  haystack-ai:
+    image: deepset/haystack:latest
+    ports:
+      - "8000:8000"
+    depends_on:
+      - text-generation-inference
