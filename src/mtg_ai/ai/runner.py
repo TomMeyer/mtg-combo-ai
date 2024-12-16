@@ -26,6 +26,7 @@ class MTGAIRunner:
         top_k: int = ...,
         temperature: float = ...,
         min_p: float = ...,
+        history: Optional[list[dict[str, Any]]] = ...,
     ) -> str: ...
 
     @overload
@@ -38,6 +39,7 @@ class MTGAIRunner:
         top_k: int = ...,
         temperature: float = ...,
         min_p: float = ...,
+        history: Optional[list[dict[str, Any]]] = ...,
     ) -> Generator[str, None, None]: ...
 
     def run(
@@ -49,6 +51,7 @@ class MTGAIRunner:
         top_k: int = 10,
         temperature: float = 0.11,
         min_p: float = 0.1,
+        history: Optional[list[dict[str, Any]]] = None,
     ) -> str | Generator[str, None, None]:
         search_results: list[SearchResult] = self.rag.search(
             query, filters=filters, top_k=top_k
@@ -60,13 +63,15 @@ class MTGAIRunner:
             max_new_tokens=max_new_tokens,
             temperature=temperature,
             min_p=min_p,
+            history=history,
         )
+
         if stream_output:
             yield from ai_output
         else:
             generated_text = ""
             for new_text in ai_output:
-                generated_text += new_text
+                generated_text += f" {new_text}"
             return generated_text
 
     def batch_run(

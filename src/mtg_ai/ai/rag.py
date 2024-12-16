@@ -38,6 +38,20 @@ class SearchResult:
             raise ValueError(f"No content found for search result {self.card_name}")
 
         metadata_lines = []
+
+        for line in self.content.splitlines():
+            # if "Card Name:" in line and "side" in self.metadata:
+            # # card_name = self.card_name
+            # names = line.split(" // ")
+            # if self.metadata["side"] == "a":
+            #     card_name = names[0]
+            # elif self.metadata["side"] == "b":
+            #     card_name = names[1]
+            # line = f"Card Name: {card_name}"
+            metadata_lines.append(line)
+
+        logger.debug(f"Mana Cost: {self.metadata.get('mana_cost', '')}")
+
         if "mana_cost" in self.metadata and not self.metadata["mana_cost"].isspace():
             metadata_lines.append(f"Mana Cost: {self.metadata['mana_cost']}")
 
@@ -59,11 +73,9 @@ class SearchResult:
             metadata_lines.append(f"Loyalty: {self.metadata['loyalty']}")
         if metadata_lines:
             metadata_lines.append("\n")
-        metadata_content = "\n" + "\n".join(metadata_lines)
+        metadata_content = "\n".join(metadata_lines)
 
-        formatted_content = (
-            f"Relevancy Score: {self.score:.2f}\n{self.content} {metadata_content}"
-        )
+        formatted_content = f"Relevancy Score: {self.score:.2f}\n{metadata_content}"
         return formatted_content
 
     def __str__(self):
@@ -121,10 +133,18 @@ class MTGRAGSearchSystem:
             card_dict = row.dropna().to_dict()
             content_parts = []
 
+            card_name = card_dict["name"]
+
+            if "side" in card_dict and " // " in card_name:
+                names = card_name.split(" // ")
+                if card_dict["side"] == "a":
+                    card_name = names[0]
+                elif card_dict["side"] == "b":
+                    card_name = names[1]
             content_parts.append(f"Card Name: {card_dict['name']}")
 
-            if "mana_cost" in card_dict:
-                content_parts.append(f"Mana Cost: {card_dict['mana_cost']}")
+            if "manaCost" in card_dict:
+                content_parts.append(f"Mana Cost: {card_dict['manaCost']}")
 
             if "type" in card_dict:
                 content_parts.append(f"Type: {card_dict['type']}")
@@ -151,7 +171,7 @@ class MTGRAGSearchSystem:
 
             metadata: dict[str, Any] = {
                 "name": card_dict["name"],
-                "mana_cost": card_dict.get("mana_cost", ""),
+                "mana_cost": card_dict.get("manaCost", ""),
                 "cmc": float(card_dict.get("cmc", "")),
                 "color_identity": card_dict.get("colorIdentity", ""),
                 "type": card_dict.get("type", ""),
