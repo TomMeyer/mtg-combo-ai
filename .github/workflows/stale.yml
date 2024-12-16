@@ -26,7 +26,7 @@ jobs:
           stale-pr-message: "This pull request has been automatically marked as stale due to inactivity. Please respond or it will be closed in 7 days."
           close-issue-message: "This issue has been closed due to prolonged inactivity. Feel free to reopen if necessary."
           close-pr-message: "This pull request has been closed due to prolonged inactivity. Please reopen if there is still work to be done."
-          days-before-stale: 30 # Number of days before marking as stale
+          days-before-stale: 60 # Number of days before marking as stale
           days-before-close: 14 # Number of days before closing stale issues or PRs
           stale-issue-label: "stale"
           stale-pr-label: "stale"
