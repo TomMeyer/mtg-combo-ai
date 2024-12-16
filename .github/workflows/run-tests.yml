@@ -1,0 +1,23 @@
+name: Run Pixi Tests
+
+on:
+  # Trigger workflow on push or pull request
+  push:
+  pull_request:
+
+jobs:
+  pixi-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout your repository code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Pixi using the specified version
+      - name: Setup Pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+
+      # Run Pixi test command
+      - name: Run Pixi Tests
+        run: pixi run test
