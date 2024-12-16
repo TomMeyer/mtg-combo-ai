@@ -1,0 +1,37 @@
+# MTG AI Training parameters
+model_id: "unsloth/Llama-3.3-70B-Instruct" # Hugging Face model id
+datasets:                               # path to datasets or Huggingface Dataset names
+  - FringeFields/MTG-Rules-QA
+  - FringeFields/MTG-Cards-QA
+  - FringeFields/MTG-EDH-Combos-QA
+max_seq_length:  1024                      # max sequence length for model and packing of the dataset
+enable_profiling: false                 # enable profiling
+# training parameters
+output_dir: "./training_results/"       # Overriden by training script
+report_to: "tensorboard"                # report metrics to tensorboard
+learning_rate: 0.0002                   # learning rate 2e-4
+lr_scheduler_type: "cosine"           # learning rate scheduler
+num_train_epochs: 1                     # number of training epochs
+dataset_num_proc: 12                    # number of processes to use for dataset mapping
+dataloader_num_workers: 0               # number of workers to use for training data loading
+per_device_train_batch_size: 32         # batch size per device during training
+per_device_eval_batch_size: 8           # batch size for evaluation
+gradient_accumulation_steps: 2          # number of steps before performing a backward/update pass
+optim: adamw_torch_fused                      # use torch adamw optimizer
+logging_steps: 50                       # log every 10 steps
+save_strategy: steps                    # save checkpoint every epoch
+eval_strategy: epoch                    # evaluate every epoch
+max_grad_norm: 0.3                      # max gradient norm
+warmup_ratio: 0.03                      # warmup ratio
+bf16: true                              # use bfloat16 precision
+tf32: true                              # use tf32 precision
+# FSDP parameters: https://huggingface.co/docs/transformers/main/en/fsdp
+fsdp: "full_shard auto_wrap" # offload" # remove offload if enough GPU memory
+packing: true
+save_steps: 0.1
+fsdp_config:
+  activation_checkpointing: False
+  backward_prefetch: "backward_pre"
+  forward_prefetch: false
+  use_orig_params: true
+  
