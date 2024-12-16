@@ -9,49 +9,82 @@ path = "src/mtg_ai/__init__.py"
 name = "mtg-ai"
 description = "Magic the Gathering general information and combo llama-based LLM"
 authors = [{name = "Thomas Meyer", email = "thomas@thomasmeyer.co" }]
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.11,<3.13"
 dynamic = ["version"]
-dependencies = []
+
+[project.scripts]
+mtg-ai = "mtg_ai:_cli_main"
+mtg-ai-webserver = "mtg_ai_webserver:run"
 
 [tool.pixi.project]
-channels = [ "nvidia", "pytorch", "conda-forge", "anaconda", "xformers"]
+channels = [ "nvidia", "pytorch", "xformers", "conda-forge", "anaconda"]
 platforms = ["linux-64"]
 
 [tool.pixi.tasks]
 lint = "pre-commit run --all-files"
 test = "pytest"
 docker-build = "docker build --progress=plain -t mtg-ai:latest ."
-docker-run = "docker run --gpus all -p 8888:8888 mtg-ai:latest"
+docker-run = "docker run --gpus all -p 8888:8888 -p 8889:8889 mtg-ai:latest"
+tensorboard = "tensorboard --logdir=./logs --port=8889 --bind_all"
+
+[tool.pixi.feature.dev.tasks]
+jupyter-lab = "jupyter-lab --ip=0.0.0.0 --port=8889 --no-browser"
+
+[tool.pixi.feature.fastapi-code-gen.tasks]
+generate = "fastapi-codegen --input ./src/mtg_ai_webserver/openapi.json --output ./src/mtg_ai_webserver/ --output-model-type pydantic_v2.BaseModel -p 3.12 -r"
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
 dev = { features = ["dev", "test"], solve-group = "default" }
+fastapi-code-gen = { features = ["fastapi-code-gen"], solve-group = "fastapi-code-gen" }
+
+[tool.pixi.pypi-options]
+no-build-isolation = ["flash-attn"]
 
 [tool.pixi.dependencies]
-pytorch-cuda = "12.1"
-pytorch = "2.4.1"
-xformers = {version="0.0.28.post1", channel = "xformers"}
-haystack-ai = ">=2.5.0,<3"
+cuda-toolkit = "=12.3"
+haystack-ai = "~=2.7.0"
 
 [tool.pixi.pypi-dependencies]
 mtg-ai = { path = ".", editable = true }
-unsloth = { git = "https://github.com/unslothai/unsloth.git", extras=["colab-new"]}
-transformers = { git = "https://github.com/huggingface/transformers.git"}
-peft = ">=0.13.2"
-datasets =">=3.0.1,<4"
-trl = ">=0.11.1"
-bitsandbytes = ">=0.44.1,<0.45"
-rapidfuzz = ">=3.10.0,<4"
-sentence-transformers = ">=3.2.0,<4"
+unsloth = "~=2024.12.4"
+unsloth_zoo = { git = "https://github.com/unslothai/unsloth-zoo.git" }
+torch = "~=2.5.1"
+tensorboard = "~=2.18.0"
+torch-tb-profiler = "~=0.4.3"
+transformers = "~=4.46.3"
+datasets = "~=3.1.0"
+accelerate = "~=1.1.1"
+evaluate = "~=0.4.3"
+bitsandbytes = "~=0.44.1"
+huggingface_hub = "~=0.26.2"
+trl = "~=0.12.1"
+peft = "~=0.13.2"
+sentence-transformers = "~=3.3.1"
+rapidfuzz = "~=3.3.1"
+rich = ">=13.9.4"
+flash-attn = { url = "https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.0.post2/flash_attn-2.7.0.post2+cu12torch2.5cxx11abiFALSE-cp312-cp312-linux_x86_64.whl" }
+fastapi = "~=0.115.6"
+hypercorn = ">=0.17.3,<0.18"
+pydantic-settings = ">=2.7.0,<3"
 
-[tool.pixi.feature.dev.dependencies]
-colorlog = ">=6.8.2,<7"
-ipykernel = ">=6.29.5,<7"
+[tool.pixi.feature.dev.pypi-dependencies]
+colorlog = "~=6.9.0"
+ipykernel = "~=6.29.5"
+jupyter = ">=1.1.1"
+rpds-py = "~=0.21.0"
+ruff  = "~=0.8.0"
+jupyterlab = "~=4.2.6"
+ipython = "~=8.29.0"
+pixi-kernel = "~=0.5.1"
+ipywidgets = "~=8.1.5"
 
-[project.optional-dependencies]
-test = ["pytest"]
-dev = ["ruff", "jupyterlab", "ipython", "pixi-kernel", "ipywidgets>=8.1.5,<9", "tensorboard>=2.18.0,<3", "torch-tb-profiler>=0.4.3,<0.5"]
+[tool.pixi.feature.test.pypi-dependencies]
+pytest = "~=8.3.3"
+
+[tool.pixi.feature.fastapi-code-gen.pypi-dependencies]
+fastapi-code-generator = ">=0.5.1"
 
 # Extra tool configs
 
