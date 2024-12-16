@@ -16,16 +16,32 @@ dynamic = ["version"]
 mtg-ai = "mtg_ai:_cli_main"
 mtg-ai-webserver = "mtg_ai_webserver:run"
 
+[dependency-groups]
+test = ["pytest>=8.3.3", "pytest-mock>=3.14.0", "pytest-cov>=6.0.0"]
+dev = [
+    "colorlog~=6.9.0",
+    "ipykernel~=6.29.5",
+    "jupyter>=1.1.1",
+    "rpds-py~=0.21.0",
+    "ruff~=0.8.0",
+    "jupyterlab~=4.2.6",
+    "ipython~=8.29.0",
+    "pixi-kernel~=0.5.1",
+    "ipywidgets~=8.1.5"
+]
+
 [tool.pixi.project]
 channels = [ "nvidia", "pytorch", "xformers", "conda-forge", "anaconda"]
 platforms = ["linux-64"]
 
 [tool.pixi.tasks]
 lint = "pre-commit run --all-files"
-test = "pytest"
 docker-build = "docker build --progress=plain -t mtg-ai:latest ."
 docker-run = "docker run --gpus all -p 8888:8888 -p 8889:8889 mtg-ai:latest"
 tensorboard = "tensorboard --logdir=./logs --port=8889 --bind_all"
+
+[tool.pixi.feature.test.tasks]
+test = "pytest --cov-report html --cov=mtg_ai --cov=mtg_ai_webserver tests/"
 
 [tool.pixi.feature.dev.tasks]
 jupyter-lab = "jupyter-lab --ip=0.0.0.0 --port=8889 --no-browser"
@@ -36,7 +52,7 @@ generate = "fastapi-codegen --input ./src/mtg_ai_webserver/openapi.json --output
 [tool.pixi.environments]
 default = { solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
-dev = { features = ["dev", "test"], solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
 fastapi-code-gen = { features = ["fastapi-code-gen"], solve-group = "fastapi-code-gen" }
 
 [tool.pixi.pypi-options]
@@ -69,19 +85,11 @@ fastapi = "~=0.115.6"
 hypercorn = ">=0.17.3,<0.18"
 pydantic-settings = ">=2.7.0,<3"
 
-[tool.pixi.feature.dev.pypi-dependencies]
-colorlog = "~=6.9.0"
-ipykernel = "~=6.29.5"
-jupyter = ">=1.1.1"
-rpds-py = "~=0.21.0"
-ruff  = "~=0.8.0"
-jupyterlab = "~=4.2.6"
-ipython = "~=8.29.0"
-pixi-kernel = "~=0.5.1"
-ipywidgets = "~=8.1.5"
+
 
 [tool.pixi.feature.test.pypi-dependencies]
-pytest = "~=8.3.3"
+
+
 
 [tool.pixi.feature.fastapi-code-gen.pypi-dependencies]
 fastapi-code-generator = ">=0.5.1"
