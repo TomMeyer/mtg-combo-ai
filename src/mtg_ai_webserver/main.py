@@ -29,6 +29,7 @@ from mtg_ai_webserver.models import (
     StreamResponse,
     TokenizeResponse,
 )
+from mtg_ai_webserver.server_settings import server_settings
 
 app = FastAPI(
     title="Text Generation Inference",
@@ -42,12 +43,6 @@ app = FastAPI(
 )
 
 web_client = httpx.AsyncClient()
-
-rag_embedding_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
-card_database = MTGDatabase()
-rag_service = MTGRAGSearchSystem(
-    database=card_database, embedding_model=rag_embedding_model_name
-)
 
 
 @app.post(
@@ -94,13 +89,15 @@ def get_chat_tokenize(body: ChatRequest) -> ChatTokenizeResponse | ErrorResponse
     },
     tags=["Text Generation Inference"],
 )
-def generate(body: GenerateRequest) -> GenerateResponse | ErrorResponse:
+async def generate(body: GenerateRequest) -> GenerateResponse | ErrorResponse:
     """
     Generate tokens
     """
-    rag_search_data = rag_service.search(body.inputs, top_k=10)
-    formatted_rag_data = "\n".join([result.format() for result in rag_search_data])
-    response = GenerateResponse(generated_text=formatted_rag_data)
+    rag_search_response = await web_client.post(server_settings.rag_server + "/query", json=body)
+    rag_search_response.raise_for_status()
+    data = rag_search_response.json()
+    #TODO: Post to the text generation servers
+    response = GenerateResponse(generated_text=data["response"])
     return response
 
 

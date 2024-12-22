@@ -618,7 +618,3 @@ class SagemakerStreamResponse(
     root: Union[StreamResponse, ChatCompletionChunk, Chunk]
 
 
-class RagRequest(BaseModel):
-    query: str
-    filters: Optional[dict[str, Any]] = None
-    top_k: int = 10

@@ -8,13 +8,10 @@ from hypercorn.logging import Logger
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class MTGAIServerSettings(BaseSettings):
+class MTGAIRagServerSettings(BaseSettings):
     model_config = SettingsConfigDict(cli_parse_args=True, env_prefix="MTG_AI_MODEL")
 
-    text_generation_inference_server: str = "http://localhost:8888"
-    rag_server: str = "http://localhost:8889"
-
-    bind: list[str] = ["0.0.0.0:8080"]
+    bind: list[str] = ["0.0.0.0:8889"]
     insecure_bind: list[str] = []
     quic_bind: list[str] = []
     quic_addresses: list[tuple] = []
@@ -78,6 +75,6 @@ class MTGAIServerSettings(BaseSettings):
         return Config.from_mapping(self.model_dump())
 
 
-server_settings = MTGAIServerSettings(
+server_settings = MTGAIRagServerSettings(
     application_path=os.path.dirname(os.path.realpath(__file__))
 )
