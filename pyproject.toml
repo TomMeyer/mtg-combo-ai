@@ -26,6 +26,8 @@ test = "pytest"
 docker-build = "docker build --progress=plain -t mtg-ai:latest ."
 docker-run = "docker run --gpus all -p 8888:8888 -p 8889:8889 mtg-ai:latest"
 tensorboard = "tensorboard --logdir=./logs --port=8889 --bind_all"
+mtg_ai_webserver = "python src/mtg_ai_webserver/run.py"
+mtg_ai_rag_webserver = "python src/mtg_ai_rag_webserver/run.py"
 
 [tool.pixi.feature.dev.tasks]
 jupyter-lab = "jupyter-lab --ip=0.0.0.0 --port=8889 --no-browser"
