@@ -9,8 +9,6 @@ from typing import Optional, Union
 import httpx
 from fastapi import FastAPI
 
-from mtg_ai.ai.rag import MTGRAGSearchSystem
-from mtg_ai.cards.database import MTGDatabase
 from mtg_ai_webserver.models import (
     ChatCompletion,
     ChatRequest,
@@ -93,10 +91,12 @@ async def generate(body: GenerateRequest) -> GenerateResponse | ErrorResponse:
     """
     Generate tokens
     """
-    rag_search_response = await web_client.post(server_settings.rag_server + "/query", json=body)
+    rag_search_response = await web_client.post(
+        server_settings.rag_server + "/query", json=body
+    )
     rag_search_response.raise_for_status()
     data = rag_search_response.json()
-    #TODO: Post to the text generation servers
+    # TODO: Post to the text generation servers
     response = GenerateResponse(generated_text=data["response"])
     return response
 
