@@ -616,5 +616,3 @@ class SagemakerStreamResponse(
     RootModel[Union[StreamResponse, ChatCompletionChunk, Chunk]]
 ):
     root: Union[StreamResponse, ChatCompletionChunk, Chunk]
-
-

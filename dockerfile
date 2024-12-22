@@ -69,3 +69,25 @@ EXPOSE 8889
 ENTRYPOINT [ "/bin/bash", "/home/appuser/shell-hook.sh" ]
 # Set JupyterLab to run on container start without root privileges
 CMD ["pixi", "run", "jupyter-lab"]
+
+#######################################################
+# STAGE 3: mtg_ai_rag_webserver environment
+#######################################################
+FROM runtime AS mtg_ai_rag_webserver
+
+# Expose the port for the mtg_ai_rag_webserver
+EXPOSE 8000
+
+# Set the command to run the mtg_ai_rag_webserver
+CMD ["pixi", "run", "mtg_ai_rag_webserver"]
+
+#######################################################
+# STAGE 4: mtg_ai_webserver environment
+#######################################################
+FROM runtime AS mtg_ai_webserver
+
+# Expose the port for the mtg_ai_webserver
+EXPOSE 8080
+
+# Set the command to run the mtg_ai_webserver
+CMD ["pixi", "run", "mtg_ai_webserver"]

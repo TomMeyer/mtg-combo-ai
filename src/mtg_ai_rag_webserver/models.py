@@ -7,6 +7,7 @@ class ErrorResponse(BaseModel):
     error: str
     error_type: str
 
+
 class RagRequest(BaseModel):
     query: str
     filters: Optional[dict[str, Any]] = None

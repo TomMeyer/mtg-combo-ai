@@ -33,3 +33,23 @@ services:
       - "8000:8000"
     depends_on:
       - text-generation-inference
+
+  mtg_ai_webserver:
+    build:
+      context: .
+      dockerfile: dockerfile
+      target: mtg_ai_webserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      - text-generation-inference
+
+  mtg_ai_rag_webserver:
+    build:
+      context: .
+      dockerfile: dockerfile
+      target: mtg_ai_rag_webserver
+    ports:
+      - "8888:8888"
+    depends_on:
+      - text-generation-inference

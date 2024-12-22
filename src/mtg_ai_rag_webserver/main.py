@@ -30,15 +30,16 @@ rag_service = MTGRAGSearchSystem(
     database=card_database, embedding_model=rag_embedding_model_name
 )
 
+
 @app.post(
-    "/query", 
-    response_model=RAGResponse,     
+    "/query",
+    response_model=RAGResponse,
     responses={
         "422": {"model": ErrorResponse},
         "424": {"model": ErrorResponse},
         "429": {"model": ErrorResponse},
         "500": {"model": ErrorResponse},
-    }
+    },
 )
 def query(query: RagRequest):
     result = rag_service.search(query.query, query.filters, query.top_k)
@@ -51,14 +52,17 @@ def index():
     rag_service.index()
     return {"message": "Indexing complete"}
 
+
 @app.delete("/index/{doc_id}")
 def delete(doc_id: str):
     # rag_service.delete(doc_id)
     return {"message": "Document deleted"}
 
+
 @app.get("/status")
 def status():
     return {"status": "ok"}
+
 
 @app.post("/update-embeddings")
 def update_embeddings():
