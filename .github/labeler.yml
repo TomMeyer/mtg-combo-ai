@@ -1,4 +1,4 @@
-feature:
+enhancement:
   - head-branch: ['feature/.*']
 bugfix:
   - head-branch: ['bugfix/.*']

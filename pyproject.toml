@@ -23,7 +23,10 @@ platforms = ["linux-64"]
 [tool.pixi.tasks]
 lint = "pre-commit run --all-files"
 test = "pytest"
-docker-build = "docker build --progress=plain -t mtg-ai:latest ."
+docker-build = { depends-on = ["docker-build-llm-training", "docker-build-rag-webserver", "docker-build-webserver"] }
+docker-build-llm-training = "docker build --progress=plain -t mtg-ai --target llm-training ."
+docker-build-rag-webserver = "docker build --progress=plain -t mtg-ai-rag-webserver --target mtg_ai_rag_webserver ."
+docker-build-webserver = "docker build --progress=plain -t mtg-ai-webserver --target mtg_ai_webserver ."
 docker-run = "docker run --gpus all -p 8888:8888 -p 8889:8889 mtg-ai:latest"
 tensorboard = "tensorboard --logdir=./logs --port=8889 --bind_all"
 mtg_ai_webserver = "python src/mtg_ai_webserver/run.py"

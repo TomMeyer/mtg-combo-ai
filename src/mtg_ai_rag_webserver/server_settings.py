@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class MTGAIRagServerSettings(BaseSettings):
-    model_config = SettingsConfigDict(cli_parse_args=True, env_prefix="MTG_AI_MODEL")
+    model_config = SettingsConfigDict(cli_parse_args=True, env_prefix="MTG_AI_RAG")
 
     bind: list[str] = ["0.0.0.0:8889"]
     insecure_bind: list[str] = []

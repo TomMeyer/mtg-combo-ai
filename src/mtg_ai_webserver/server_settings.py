@@ -9,12 +9,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class MTGAIServerSettings(BaseSettings):
-    model_config = SettingsConfigDict(cli_parse_args=True, env_prefix="MTG_AI_MODEL")
+    model_config = SettingsConfigDict(cli_parse_args=True, env_prefix="MTG_AI")
 
-    text_generation_inference_server: str = "http://localhost:8888"
+    text_generation_inference_server: str = "http://localhost:9000"
     rag_server: str = "http://localhost:8889"
 
-    bind: list[str] = ["0.0.0.0:8080"]
+    bind: list[str] = ["0.0.0.0:8888"]
     insecure_bind: list[str] = []
     quic_bind: list[str] = []
     quic_addresses: list[tuple] = []

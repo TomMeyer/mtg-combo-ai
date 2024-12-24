@@ -62,16 +62,21 @@ WORKDIR /home/appuser/mtg-ai
 # Switch to the non-root user
 USER appuser
 ENV PATH="/home/appuser/.pixi/bin:$PATH"
+ENTRYPOINT [ "/bin/bash", "/home/appuser/shell-hook.sh" ]
+
+#######################################################
+# STAGE 3: LLM training environment
+#######################################################
+FROM runtime as llm-training
 
 # Expose the default JupyterLab port
 EXPOSE 8889
 
-ENTRYPOINT [ "/bin/bash", "/home/appuser/shell-hook.sh" ]
 # Set JupyterLab to run on container start without root privileges
 CMD ["pixi", "run", "jupyter-lab"]
 
 #######################################################
-# STAGE 3: mtg_ai_rag_webserver environment
+# STAGE 4: mtg_ai_rag_webserver environment
 #######################################################
 FROM runtime AS mtg_ai_rag_webserver
 
@@ -82,7 +87,7 @@ EXPOSE 8000
 CMD ["pixi", "run", "mtg_ai_rag_webserver"]
 
 #######################################################
-# STAGE 4: mtg_ai_webserver environment
+# STAGE 5: mtg_ai_webserver environment
 #######################################################
 FROM runtime AS mtg_ai_webserver
 
