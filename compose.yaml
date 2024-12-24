@@ -9,8 +9,6 @@ services:
       #         count: all
       #         capabilities: [gpu]
     shm_size: '1gb'
-    ports:
-      - "9000:9000"
     networks:
       - backend
     environment:
@@ -21,8 +19,6 @@ services:
 
   mtg_ai_rag_webserver:
     image: mtg-ai-rag-webserver:latest
-    ports:
-      - "8889:8889"
     networks:
       - backend
     depends_on:
@@ -30,8 +26,6 @@ services:
 
   mtg_ai_webserver:
     image: mtg-ai-webserver:latest
-    ports:
-      - "8080:8080"
     networks:
       - backend
     depends_on:
@@ -39,13 +33,10 @@ services:
 
   chat-ui:
     image: ghcr.io/huggingface/chat-ui-db:latest
-    ports:
-      - "3000:3000"
     networks:
       - backend
     env_file:
       - path: ./chat-ui-env.local
-    # environment:
     volumes:
       - chat-ui:/data
 
@@ -59,13 +50,14 @@ services:
       - text-generation-inference
       - mtg_ai_webserver
       - mtg_ai_rag_webserver
+      - chat-ui
     networks:
       - backend
       - frontend
 
 networks:
   backend:
-    internal: true
+    internal: false
   
   frontend:
     internal: false

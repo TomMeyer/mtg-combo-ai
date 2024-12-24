@@ -11,10 +11,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class MTGAIServerSettings(BaseSettings):
     model_config = SettingsConfigDict(cli_parse_args=True, env_prefix="MTG_AI")
 
-    text_generation_inference_server: str = "http://localhost:9000"
-    rag_server: str = "http://localhost:8889"
+    text_generation_inference_server: str = "http://text_generation_inference_webserver:8080"
+    rag_server: str = "http://mtg_ai_rag_webserver:8080"
 
-    bind: list[str] = ["0.0.0.0:8888"]
+    bind: list[str] = ["0.0.0.0:8080"]
     insecure_bind: list[str] = []
     quic_bind: list[str] = []
     quic_addresses: list[tuple] = []
@@ -71,7 +71,7 @@ class MTGAIServerSettings(BaseSettings):
     websocket_max_message_size: int = 16 * 1024 * 1024 * BYTES
     websocket_ping_interval: Optional[float] = None
     worker_class: str = "asyncio"
-    workers: int = 1
+    workers: int = 2
     wsgi_max_body_size: int = 16 * 1024 * 1024 * BYTES
 
     def to_hypercorn_config(self) -> Config:
