@@ -128,15 +128,15 @@ def _build_filtered_sqlite():
     # Create the new table
     create_table_query = f"""
     CREATE TABLE filtered_cards (
-        {', '.join(f'{col} TEXT' for col in columns)}
+        {", ".join(f"{col} TEXT" for col in columns)}
     )
     """
     new_cursor.execute(create_table_query)
 
     # Insert the filtered data into the new table
     insert_query = f"""
-    INSERT INTO filtered_cards ({', '.join(columns)})
-    VALUES ({', '.join(['?' for _ in columns])})
+    INSERT INTO filtered_cards ({", ".join(columns)})
+    VALUES ({", ".join(["?" for _ in columns])})
     """
     new_cursor.executemany(insert_query, rows)
 
