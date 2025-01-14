@@ -995,7 +995,7 @@ def build_cards_to_combo_question_answer_dataset(database: MTGDatabase):
 
         steps = []
         for i, step in enumerate(combo["combo"]["steps"].splitlines()):
-            steps.append(f"  {i+1}. {step}")
+            steps.append(f"  {i + 1}. {step}")
         steps_text = "\n".join(steps)
 
         question = f"How can you create a combo with {card_names_text}?"
