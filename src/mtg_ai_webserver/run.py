@@ -1,14 +1,19 @@
-import asyncio
+from pathlib import Path
 
-from hypercorn.asyncio import serve
+import trio
+from hypercorn import Config
+from hypercorn.trio import serve
 
 from mtg_ai_webserver.main import app
-from mtg_ai_webserver.server_settings import server_settings
 
+script_path = Path(__file__).parent
+
+config = None
 
 def run():
-    config = server_settings.to_hypercorn_config()
-    asyncio.run(serve(app, config))
+    global config
+    config = Config.from_toml(script_path.joinpath("config.toml"))
+    trio.run(serve, app, config)
 
 
 if __name__ == "__main__":

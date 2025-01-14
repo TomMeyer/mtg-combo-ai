@@ -4,18 +4,26 @@
 
 from __future__ import annotations
 
+import logging
+from collections.abc import Iterable
+from dataclasses import asdict
 from typing import Optional, Union
 
 import httpx
 from fastapi import FastAPI
+from huggingface_hub import (
+    ChatCompletionInput,
+    ChatCompletionOutput,
+    ChatCompletionStreamOutput,
+    InferenceClient,
+    ModelInfo,
+)
 
 from mtg_ai_webserver.models import (
-    ChatCompletion,
     ChatRequest,
     ChatTokenizeResponse,
     CompatGenerateRequest,
     CompletionFinal,
-    CompletionRequest,
     ErrorResponse,
     FieldDatamodelCodeGeneratorRootSpecialPostResponse,
     GenerateRequest,
@@ -27,20 +35,42 @@ from mtg_ai_webserver.models import (
     StreamResponse,
     TokenizeResponse,
 )
-from mtg_ai_webserver.server_settings import server_settings
 
-app = FastAPI(
-    title="Text Generation Inference",
-    description="Text Generation Webserver",
-    contact={"name": "Olivier Dehaene"},
-    license={
-        "name": "Apache 2.0",
-        "url": "https://www.apache.org/licenses/LICENSE-2.0",
-    },
-    version="3.0.1-dev0",
-)
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
-web_client = httpx.AsyncClient()
+
+_app_instance: Optional[FastAPI] = None
+
+def get_application() -> FastAPI:
+    global _app_instance
+    if _app_instance is None:
+        _app_instance = FastAPI(
+            title="Text Generation Inference",
+            description="Text Generation Webserver",
+            contact={"name": "Thomas Meyer", "email": "thomas@thomasmeyer.co"},
+            license={
+                "name": "Apache 2.0",
+                "url": "https://www.apache.org/licenses/LICENSE-2.0",
+            },
+            version="3.0.1-dev0",
+        )
+    return _app_instance
+
+app = get_application()
+
+inference_client = InferenceClient(model="http://text-generation-inference:8080")
+
+web_client = httpx.AsyncClient(http2=True)
+
+# @app.middleware("http")
+# async def log_requests(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+#     logger.info(f"Middleware Rquest: {request.method} URL: {request.url} Body: {await request.json()}")
+#     test_req = ChatRequest.model_validate(await request.json())
+#     logger.info(test_req)
+#     response = await call_next(request)
+#     logger.info(f"Middleware Response: {response.status_code}")
+#     return response
 
 
 @app.post(
@@ -60,7 +90,9 @@ def compat_generate(
     """
     Generate tokens if `stream == false` or a stream of token if `stream == true`
     """
-    return GenerateResponse(generated_text="sample text")
+    logger.info("POST /compat_generate")
+    logger.debug(f"Request body: {body}")
+    return GenerateResponse(generated_text="test compat generate response")
 
 
 @app.post(
@@ -73,7 +105,9 @@ def get_chat_tokenize(body: ChatRequest) -> ChatTokenizeResponse | ErrorResponse
     """
     Template and tokenize ChatRequest
     """
-    pass
+    logger.info("POST /chat_tokenize")
+    logger.debug(f"Request body: {body}")
+    return ChatTokenizeResponse(templated_text="\n".join(body.messages), tokenize_response="sample text")
 
 
 @app.post(
@@ -91,12 +125,16 @@ async def generate(body: GenerateRequest) -> GenerateResponse | ErrorResponse:
     """
     Generate tokens
     """
+    logger.info("POST /generate")
+    logger.debug(f"Request body: {body}")
+    rag_server = "http://mtg-ai-rag-webserver:8000"
     rag_search_response = await web_client.post(
-        server_settings.rag_server + "/query", json=body
+        rag_server + "/query", json=body
     )
     rag_search_response.raise_for_status()
     data = rag_search_response.json()
-    # TODO: Post to the text generation servers
+    logger.debug(f"RAG search response: {data}")
+    # TODO: Post to  the text generation servers
     response = GenerateResponse(generated_text=data["response"])
     return response
 
@@ -112,11 +150,22 @@ async def generate(body: GenerateRequest) -> GenerateResponse | ErrorResponse:
     },
     tags=["Text Generation Inference"],
 )
-def generate_stream(body: GenerateRequest) -> StreamResponse | ErrorResponse:
+async def generate_stream(body: GenerateRequest) -> StreamResponse | ErrorResponse:
     """
     Generate a stream of token using Server-Sent Events
     """
-    pass
+    logger.info("POST /generate_stream")
+    logger.debug(f"Request body: {body}")
+    rag_server = "http://mtg-ai-rag-webserver:8000"
+    rag_search_response = await web_client.post(
+        rag_server + "/query", json=body
+    )
+    rag_search_response.raise_for_status()
+    data = rag_search_response.json()
+    logger.debug(f"RAG search response: {data}")
+    # TODO: Post to the text generation servers
+    response = GenerateResponse(generated_text=data["response"])
+    return response    
 
 
 @app.get(
@@ -129,7 +178,8 @@ def health() -> Optional[ErrorResponse]:
     """
     Health check method
     """
-    pass
+    logger.info("GET /health")
+    return None
 
 
 @app.get("/info", response_model=Info, tags=["Text Generation Inference"])
@@ -137,8 +187,12 @@ def get_model_info() -> Info:
     """
     Text Generation Inference endpoint info
     """
-    pass
-
+    logger.info("GET /info")
+    return Info(
+        model_name="test model name",
+        model_description="test model description",
+        model_version="test model version",
+    )
 
 @app.post(
     "/invocations",
@@ -157,6 +211,8 @@ def sagemaker_compatibility(
     """
     Generate tokens from Sagemaker request
     """
+    logger.info("POST /invocations")
+    logger.debug(f"Request body: {body}")
     pass
 
 
@@ -165,7 +221,8 @@ def metrics() -> str:
     """
     Prometheus metrics scrape endpoint
     """
-    pass
+    logger.info("GET /metrics")
+    return "test metrics response"
 
 
 @app.post(
@@ -178,25 +235,77 @@ def tokenize(body: GenerateRequest) -> TokenizeResponse | ErrorResponse:
     """
     Tokenize inputs
     """
-    pass
+    logger.info("POST /tokenize")
+    logger.debug(f"Request body: {body}")
+    return TokenizeResponse(tokenized_text="test tokenize response")
 
+async def query_rag(request: ChatCompletionInput):
+    logger.debug("Getting RAG data")
+    rag_server = "http://mtg-ai-rag-webserver:8000"
+    rag_request = {
+        "query": asdict(request.messages[-1]),
+        "top_k": 5,
+        "filters": None,
+    }
+    logger.debug(f"RAG request: {rag_request}")
+    rag_search_response = await web_client.post(
+        rag_server + "/query", json=rag_request
+    )
+    rag_search_response.raise_for_status()
+    data = rag_search_response.json()
+    logger.debug(f"RAG search response: {data}")
+
+
+def query_ai(request: ChatCompletionInput) -> Union[dict, Iterable[dict]]:
+    response: Union[ChatCompletionOutput | Iterable[ChatCompletionStreamOutput]] = inference_client.chat_completion(
+        messages=request.messages,
+        model=request.model,
+        temperature=request.temperature,
+        top_p=request.top_p,
+        n=request.n,
+        stream=request.stream,
+        stop=request.stop,
+        max_tokens=request.max_tokens,
+        presence_penalty=request.presence_penalty,
+        frequency_penalty=request.frequency_penalty,
+        logit_bias=request.logit_bias,
+        logprobs=request.logprobs,
+        response_format=request.response_format,
+        seed=request.seed,
+        stream_options=request.stream_options,
+        tool_choice=request.tool_choice,
+        tool_prompt=request.tool_prompt,
+        tools=request.tools,
+        top_logprobs=request.top_logprobs,
+    )
+    if isinstance(response, Iterable):
+        for r in response:
+            logger.info(f"AI STREAM RESPONSE: {type(r)} {r}")
+            yield asdict(r)
+    else:
+        logger.info(f"AI Response: {type(response)} {response}")
+        yield asdict(response)
 
 @app.post(
     "/v1/chat/completions",
-    response_model=ChatCompletion,
-    responses={
-        "422": {"model": ErrorResponse},
-        "424": {"model": ErrorResponse},
-        "429": {"model": ErrorResponse},
-        "500": {"model": ErrorResponse},
-    },
+    # response_model=ChatCompletionOutput,
+    # responses={
+    #     "422": {"model": ErrorResponse},
+    #     "424": {"model": ErrorResponse},
+    #     "429": {"model": ErrorResponse},
+    #     "500": {"model": ErrorResponse},
+    # },  
     tags=["Text Generation Inference"],
 )
-def chat_completions(body: ChatRequest) -> ChatCompletion | ErrorResponse:
+def chat_completions(request: ChatCompletionInput):# -> ChatCompletionOutput | ChatCompletionStreamOutput | ErrorResponse:
     """
-    Generate tokens
+    Generate chat responses
     """
-    pass
+    logger.debug(f"messages: {request.messages}")
+    response = query_ai(request)
+    yield from response
+
+
 
 
 @app.post(
@@ -210,11 +319,13 @@ def chat_completions(body: ChatRequest) -> ChatCompletion | ErrorResponse:
     },
     tags=["Text Generation Inference"],
 )
-def completions(body: CompletionRequest) -> CompletionFinal | ErrorResponse:
+def completions(body: ChatCompletionInput) -> ChatCompletionOutput | ErrorResponse:
     """
     Generate tokens
     """
-    pass
+    logger.info("POST /v1/completions")
+    logger.debug(f"Request body: {body}")
+    return CompletionFinal(completed_text="test completions response")
 
 
 @app.get(
@@ -227,4 +338,5 @@ def openai_get_model_info() -> ModelInfo | ErrorResponse:
     """
     Get model info
     """
-    pass
+    logger.info("GET /v1/models")
+    return ModelInfo(model_name="test model name", model_description="test model description")

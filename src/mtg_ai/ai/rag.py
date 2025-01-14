@@ -82,13 +82,23 @@ class SearchResult:
         return f"{self.card_name} ({self.score:.2f})"
 
 
+@dataclass
+class SearchResults:
+    results: list[SearchResult]
+
+    def format(self) -> str:
+        return "\n".join([r.format() for r in self.results])
+
+
 class MTGRAGSearchSystem:
     def __init__(
         self,
         database: MTGDatabase,
         embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
         document_cache_dir: PathLike = Path("./mtg_ai_rag_cache"),
+        index_on_init: bool = True,
     ):
+        self._is_initialized = False
         logger.info("Initializing MTG Search System")
 
         self.document_cache_dir = Path(document_cache_dir)
@@ -117,6 +127,9 @@ class MTGRAGSearchSystem:
             document_store=self.document_store
         )
         logger.debug("Retrievers initialized")
+
+        if index_on_init:
+            self.index_cards()
 
         logger.debug("MTG Search System initialization complete")
 
@@ -211,6 +224,7 @@ class MTGRAGSearchSystem:
 
         logger.info(f"Successfully indexed {len(documents)} cards")
         # self.save_document_store("./mtg_ai_rag_cache")
+        self._is_initialized = True
         return len(documents)
 
     def save_document_store(self, dir_path: PathLike):
@@ -252,7 +266,7 @@ class MTGRAGSearchSystem:
 
     def search(
         self, query: str, filters: Optional[dict[str, Any]] = None, top_k: int = 10
-    ) -> list[SearchResult]:
+    ) -> SearchResults:
         """
         Search for cards with optional filters
 
@@ -273,7 +287,10 @@ class MTGRAGSearchSystem:
             "rarity": "rare"
         }
         """
+        if not self._is_initialized:
+            self.index_cards()
         # Get BM25 results
+
         logger.info(
             f"Performing hybrid search for query: '{query}' with filters: {filters}"
         )
@@ -296,7 +313,10 @@ class MTGRAGSearchSystem:
         seen_ids = set()
 
         def read_results(
-            results: list[Document], seen_ids: set[str], all_results: list[SearchResult]
+            results: list[Document],
+            seen_ids: set[str],
+            retriever_type: str,
+            all_results: list[SearchResult],
         ) -> None:
             for doc in results:
                 if doc.id in seen_ids:
@@ -306,17 +326,23 @@ class MTGRAGSearchSystem:
                         card_name=doc.meta["name"],
                         content=doc.content,
                         score=doc.score,
-                        retriever_type="bm25",
+                        retriever_type=retriever_type,
                         metadata=doc.meta,
                     )
                 )
                 seen_ids.add(doc.id)
 
         read_results(
-            bm25_results["documents"], seen_ids=seen_ids, all_results=all_results
+            bm25_results["documents"],
+            retriever_type="bm25",
+            seen_ids=seen_ids,
+            all_results=all_results,
         )
         read_results(
-            embedding_results["documents"], seen_ids=seen_ids, all_results=all_results
+            embedding_results["documents"],
+            retriever_type="embeddings",
+            seen_ids=seen_ids,
+            all_results=all_results,
         )
 
         # Get top k results
@@ -327,4 +353,5 @@ class MTGRAGSearchSystem:
         logger.info(f"Hybrid search complete. Returning {len(top_results)} results")
         logger.debug("Top results:" + ", ".join([r.card_name for r in top_results]))
 
-        return top_results
+        result = SearchResults(results=top_results)
+        return result

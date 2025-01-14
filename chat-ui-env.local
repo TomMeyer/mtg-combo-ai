@@ -1,6 +1,18 @@
 MONGODB_URL=mongodb://localhost:27017
-HF_TOKEN=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
 
-MODELS='[{"name":"meta-llama/Llama-3.2-1B-Instruct", "id":"meta-llama/Llama-3.2-1B-Instruct", "parameters":{"temperature":0.9,"top_p":0.95,"repetition_penalty":1.2,"top_k":50,"truncate":1000,"max_new_tokens":1024,"stop":[]}, "endpoints":[{"type":"openai","baseURL":"http://mtg_ai_webserver:8888/v1"}]}]'
-
-
+MODELS=`[
+  {
+    "name": "meta-llama/Llama-3.2-1B-Instruct",
+    "parameters": {
+      "temperature": 0.9,
+      "top_p": 0.95,
+      "repetition_penalty": 1.2,
+      "top_k": 50,
+      "truncate": 1000,
+      "max_new_tokens": 1024,
+    },
+    "endpoints": [
+      { "type": "openai", "baseURL": "http://mtg-ai-webserver:8080/v1" }
+    ]
+  }
+]`

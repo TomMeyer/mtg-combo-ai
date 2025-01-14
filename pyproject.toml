@@ -15,6 +15,7 @@ dynamic = ["version"]
 [project.scripts]
 mtg-ai = "mtg_ai:_cli_main"
 mtg-ai-webserver = "mtg_ai_webserver:run"
+mtg-ai-rag-webserver = "mtg_ai_rag_webserver:run"
 
 [tool.pixi.project]
 channels = [ "nvidia", "pytorch", "xformers", "conda-forge", "anaconda"]
@@ -30,19 +31,15 @@ docker-build-webserver = "docker build --progress=plain -t mtg-ai-webserver --ta
 docker-run = "docker run --gpus all -p 8888:8888 -p 8889:8889 mtg-ai:latest"
 tensorboard = "tensorboard --logdir=./logs --port=8889 --bind_all"
 mtg_ai_webserver = "python src/mtg_ai_webserver/run.py"
-mtg_ai_rag_webserver = "python src/mtg_ai_rag_webserver/run.py"
+mtg_ai_rag_webserver = "hypercorn --config ./hypercorn_config.toml mtg_ai_rag_webserver:app"
 
 [tool.pixi.feature.dev.tasks]
 jupyter-lab = "jupyter-lab --ip=0.0.0.0 --port=8889 --no-browser"
-
-[tool.pixi.feature.fastapi-code-gen.tasks]
-generate = "fastapi-codegen --input ./src/mtg_ai_webserver/openapi.json --output ./src/mtg_ai_webserver/ --output-model-type pydantic_v2.BaseModel -p 3.12 -r"
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
 test = { features = ["test"], solve-group = "default" }
 dev = { features = ["dev", "test"], solve-group = "default" }
-fastapi-code-gen = { features = ["fastapi-code-gen"], solve-group = "fastapi-code-gen" }
 
 [tool.pixi.pypi-options]
 no-build-isolation = ["flash-attn"]
@@ -71,8 +68,9 @@ rapidfuzz = "~=3.3.1"
 rich = ">=13.9.4"
 flash-attn = { url = "https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.0.post2/flash_attn-2.7.0.post2+cu12torch2.5cxx11abiFALSE-cp312-cp312-linux_x86_64.whl" }
 fastapi = "~=0.115.6"
-hypercorn = ">=0.17.3,<0.18"
+hypercorn = { version = ">=0.17.3,<0.18", extras = ["trio"]}
 pydantic-settings = ">=2.7.0,<3"
+trio = ">=0.28.0,<0.29"
 
 [tool.pixi.feature.dev.pypi-dependencies]
 colorlog = "~=6.9.0"
@@ -88,8 +86,6 @@ ipywidgets = "~=8.1.5"
 [tool.pixi.feature.test.pypi-dependencies]
 pytest = "~=8.3.3"
 
-[tool.pixi.feature.fastapi-code-gen.pypi-dependencies]
-fastapi-code-generator = ">=0.5.1"
 
 # Extra tool configs
 

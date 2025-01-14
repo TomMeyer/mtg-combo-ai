@@ -1,5 +1,6 @@
 from typing import Any, Optional
 
+from huggingface_hub import ChatCompletionInputMessage
 from pydantic import BaseModel
 
 
@@ -9,10 +10,10 @@ class ErrorResponse(BaseModel):
 
 
 class RagRequest(BaseModel):
-    query: str
+    query: ChatCompletionInputMessage
     filters: Optional[dict[str, Any]] = None
     top_k: int = 10
 
 
 class RAGResponse(BaseModel):
-    response: str
+    content: str
